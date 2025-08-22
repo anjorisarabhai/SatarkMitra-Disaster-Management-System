@@ -1,1 +1,2 @@
 # SatarkMitra-Disaster-Management-System
+This project is a disaster management platform that enhances preparedness, response, and recovery during emergencies. It offers prediction and risk mapping, personalized location-based alerts, and reliable communication in low-connectivity areas. The system supports coordination among authorities, NGOs, and communities, prioritizes urgent requests, provides 24/7 communication support, and ensures transparency through validated public risk maps.
