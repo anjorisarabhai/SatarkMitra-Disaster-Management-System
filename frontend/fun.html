@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SatarkMitra: Risk Zone Portal (Three.js)</title>
+  
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden; /* Prevent body scrollbars */
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+
+  <!-- React, ReactDOM, and Babel CDNs -->
+  <!-- We use Babel to transpile JSX right in the browser -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Three.js CDN for 3D rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- OrbitControls for mouse interaction -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <div id="root" class="h-screen w-screen p-4 flex flex-col"></div>
+
+  <script type="text/babel">
+    'use strict';
+
+    // Main App component for the map and UI
+    const App = () => {
+      // State to hold the data from the simulated API call
+      const [apiData, setApiData] = React.useState(null);
+      // State to track loading status
+      const [loading, setLoading] = React.useState(true);
+      
+      const mapContainer = React.useRef(null);
+      const sceneRef = React.useRef(null);
+      const cameraRef = React.useRef(null);
+      const rendererRef = React.useRef(null);
+      const controlsRef = React.useRef(null);
+      const animationFrameId = React.useRef(null);
+
+      React.useEffect(() => {
+        // This effect runs once when the component mounts.
+        // It's responsible for setting up the Three.js scene.
+        
+        // --- 1. Scene Setup ---
+        const scene = new THREE.Scene();
+        sceneRef.current = scene;
+        scene.background = new THREE.Color(0x0a0a0a);
+
+        // --- 2. Camera Setup ---
+        const fov = 75;
+        const aspect = mapContainer.current.clientWidth / mapContainer.current.clientHeight;
+        const near = 0.1;
+        const far = 1000;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.set(0, 10, 20);
+        camera.lookAt(0, 0, 0);
+        cameraRef.current = camera;
+
+        // --- 3. Renderer Setup ---
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(mapContainer.current.clientWidth, mapContainer.current.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        mapContainer.current.appendChild(renderer.domElement);
+        rendererRef.current = renderer;
+
+        // --- 4. Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 7.5);
+        scene.add(directionalLight);
+
+        // --- 5. Add 3D Objects ---
+        // Base plane representing the ground
+        const planeGeometry = new THREE.PlaneGeometry(30, 30);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 }); // Forest Green
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2; // Rotate the plane to be flat
+        scene.add(plane);
+
+        // Risk Zone objects (simple box geometries)
+        const addRiskZones = () => {
+          // High-Risk Zone (Red Box)
+          const highRiskGeometry = new THREE.BoxGeometry(3, 1.5, 3);
+          const highRiskMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, opacity: 0.8, transparent: true });
+          const highRiskZone = new THREE.Mesh(highRiskGeometry, highRiskMaterial);
+          highRiskZone.position.set(0, 0.75, 0); // Position it on the plane
+          scene.add(highRiskZone);
+
+          // Low-Risk Zone A (Green Box)
+          const lowRiskAGeometry = new THREE.BoxGeometry(2, 1, 2);
+          const lowRiskAMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, opacity: 0.8, transparent: true });
+          const lowRiskZoneA = new THREE.Mesh(lowRiskAGeometry, lowRiskAMaterial);
+          lowRiskZoneA.position.set(5, 0.5, -4);
+          scene.add(lowRiskZoneA);
+
+          // Low-Risk Zone B (Green Box)
+          const lowRiskBGeometry = new THREE.BoxGeometry(2.5, 1.2, 2.5);
+          const lowRiskBMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, opacity: 0.8, transparent: true });
+          const lowRiskZoneB = new THREE.Mesh(lowRiskBGeometry, lowRiskBMaterial);
+          lowRiskZoneB.position.set(-6, 0.6, 3);
+          scene.add(lowRiskZoneB);
+        };
+        addRiskZones();
+
+        // --- 6. Controls ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Enable damping (inertia)
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 50;
+        controlsRef.current = controls;
+
+        // --- 7. Animation Loop ---
+        const animate = () => {
+          animationFrameId.current = requestAnimationFrame(animate);
+          controls.update(); // Only required if controls.enableDamping is true
+          renderer.render(scene, camera);
+        };
+
+        // Handle window resizing
+        const handleResize = () => {
+          if (mapContainer.current) {
+            camera.aspect = mapContainer.current.clientWidth / mapContainer.current.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(mapContainer.current.clientWidth, mapContainer.current.clientHeight);
+          }
+        };
+        window.addEventListener('resize', handleResize);
+
+        // --- 8. Simulate API Call & Start Animation ---
+        const fetchDataFromTestApi = () => {
+          const mockApiData = {
+            status: 'OK',
+            message: 'Data successfully fetched from test API.',
+            current_risk_level: 'High',
+            active_alerts: ['Flash flood warning', 'Landslide advisory'],
+          };
+          setTimeout(() => {
+            setApiData(mockApiData);
+            setLoading(false);
+          }, 2000);
+        };
+
+        // Start the process
+        animate();
+        fetchDataFromTestApi();
+
+        // --- 9. Clean-up Function ---
+        return () => {
+          cancelAnimationFrame(animationFrameId.current);
+          if (mapContainer.current && renderer.domElement) {
+            mapContainer.current.removeChild(renderer.domElement);
+          }
+          window.removeEventListener('resize', handleResize);
+        };
+      }, []); // Empty dependency array ensures this effect runs only once
+
+      // Tailwind CSS classes for styling
+      const containerClass = "h-full w-full flex flex-col font-inter bg-gray-900 text-gray-100";
+      const headerClass = "text-3xl font-bold mb-4 text-center text-blue-400";
+      const mapContainerClass = "flex-1 overflow-hidden relative rounded-xl shadow-lg";
+      const overlayClass = "absolute bottom-4 left-4 right-4 p-4 bg-gray-800 bg-opacity-70 rounded-lg shadow-xl backdrop-blur-sm transition-opacity duration-300";
+      const loadingIndicatorClass = "text-center text-gray-400 animate-pulse";
+      const statusBadgeClass = (riskLevel) => 
+        `px-3 py-1 text-sm font-semibold rounded-full ${riskLevel === 'High' ? 'bg-red-600' : 'bg-green-600'} text-white`;
+
+      return (
+        <div className={containerClass}>
+          <h1 className={headerClass}>SatarkMitra: Kedarnath Risk Zone Portal</h1>
+          <div className={mapContainerClass} ref={mapContainer}>
+            {/* The Three.js canvas will be appended here */}
+            
+            {/* Overlay for API data */}
+            <div className={overlayClass}>
+              <h2 className="text-xl font-semibold mb-2">System Status</h2>
+              {loading ? (
+                <p className={loadingIndicatorClass}>Connecting to test API...</p>
+              ) : (
+                <div className="flex flex-col space-y-2">
+                  <p className="flex items-center space-x-2">
+                    <span className="font-medium">Current Risk Level:</span>
+                    <span className={statusBadgeClass(apiData.current_risk_level)}>
+                      {apiData.current_risk_level}
+                    </span>
+                  </p>
+                  <p className="font-medium">Active Alerts:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    {apiData.active_alerts.map((alert, index) => (
+                      <li key={index} className="text-gray-300">{alert}</li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-gray-400 mt-2">
+                    <span className="font-semibold">API Message:</span> {apiData.message}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Render the App component into the root div
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
