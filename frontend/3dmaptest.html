@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SatarkMitra: Risk Zone Portal</title>
+  
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    #cesium-container {
+      width: 100%;
+      height: 100%;
+    }
+    .cesium-widget-credits {
+      display: none !important;
+    }
+  </style>
+
+  <!-- React, ReactDOM, and Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+
+  <!-- CesiumJS CSS and JS CDNs -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.119.0/Build/Cesium/Widgets/widgets.css">
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.119.0/Build/Cesium/Cesium.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <div id="root" class="h-screen w-screen p-4 flex flex-col"></div>
+
+  <script type="text/babel">
+    'use strict';
+
+    const App = () => {
+      const [apiData, setApiData] = React.useState(null);
+      const [loading, setLoading] = React.useState(true);
+      const [cesiumError, setCesiumError] = React.useState(null);
+      const [viewer, setViewer] = React.useState(null);
+      
+      const cesiumContainer = React.useRef(null);
+
+      // Replace with your actual Cesium Ion access token
+      const CESIUM_ION_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1OWY3N2FhZC0wNmNiLTRiOWUtYjU4NS1lYjIzM2VmMDQ3MmUiLCJpZCI6MzM1MTk3LCJpYXQiOjE3NTYxMzMzMzZ9.RrzexoIPV5Wt2S26HxEAz1d-mdbs1wS6zJpuStnNQsE';
+
+      React.useEffect(() => {
+        if (typeof Cesium === 'undefined') {
+          setCesiumError("Cesium library failed to load. Please check your internet connection.");
+          setLoading(false);
+          return;
+        }
+
+        const initializeCesium = async () => {
+          if (cesiumContainer.current) {
+            try {
+              console.log("Initializing Cesium viewer with Ion assets...");
+              
+              // Set the Cesium Ion access token
+              Cesium.Ion.defaultAccessToken = CESIUM_ION_ACCESS_TOKEN;
+
+              // Create viewer with terrain
+              const newViewer = new Cesium.Viewer(cesiumContainer.current, {
+                terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(1),
+                // Enable UI controls
+                timeline: true,
+                animation: true,
+                baseLayerPicker: true,
+                geocoder: true,
+                homeButton: true,
+                infoBox: true,
+                sceneModePicker: true,
+                selectionIndicator: true,
+                navigationHelpButton: true,
+                fullscreenButton: true,
+              });
+
+              // Remove default credits
+              newViewer.cesiumWidget.creditContainer.style.display = 'none';
+
+              // Add your imagery layers
+              try {
+                // Add multiple imagery layers (you can toggle these in the layer picker)
+                const imageryLayers = [
+                  await Cesium.IonImageryProvider.fromAssetId(2), // Default imagery
+                  await Cesium.IonImageryProvider.fromAssetId(3), // Another imagery layer
+                  await Cesium.IonImageryProvider.fromAssetId(4), // Another imagery layer
+                ];
+
+                // Add all imagery layers (the first one will be visible)
+                imageryLayers.forEach((provider, index) => {
+                  const layer = newViewer.imageryLayers.addImageryProvider(provider);
+                  // Hide additional layers initially
+                  if (index > 0) {
+                    layer.show = false;
+                  }
+                });
+              } catch (imageryError) {
+                console.warn("Could not load imagery layers:", imageryError);
+              }
+
+              // Add your 3D tilesets
+              try {
+                const tileset1 = await Cesium.Cesium3DTileset.fromIonAssetId(2275207);
+                newViewer.scene.primitives.add(tileset1);
+                
+                const tileset2 = await Cesium.Cesium3DTileset.fromIonAssetId(96188);
+                newViewer.scene.primitives.add(tileset2);
+              } catch (tilesetError) {
+                console.warn("Could not load 3D tilesets:", tilesetError);
+              }
+
+              // Set camera to Kedarnath
+              newViewer.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(79.066, 30.735, 5000),
+                orientation: {
+                  heading: Cesium.Math.toRadians(0.0),
+                  pitch: Cesium.Math.toRadians(-45.0),
+                }
+              });
+
+              // Add Kedarnath marker
+              newViewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(79.066, 30.735),
+                point: {
+                  pixelSize: 20,
+                  color: Cesium.Color.RED,
+                  outlineColor: Cesium.Color.WHITE,
+                  outlineWidth: 3
+                },
+                label: {
+                  text: "KEDARNATH",
+                  font: '16pt Inter, sans-serif',
+                  style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                  outlineWidth: 2,
+                  verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                  pixelOffset: new Cesium.Cartesian2(0, -20),
+                  fillColor: Cesium.Color.YELLOW,
+                  outlineColor: Cesium.Color.BLACK
+                }
+              });
+
+              // Add risk zones
+              addRiskZones(newViewer);
+
+              setViewer(newViewer);
+              setLoading(false);
+
+            } catch (error) {
+              console.error("Cesium initialization error:", error);
+              setCesiumError("Failed to load Cesium map: " + error.message);
+              setLoading(false);
+            }
+          }
+        };
+
+        const addRiskZones = (viewer) => {
+          try {
+            // High-Risk Zone (Red Polygon)
+            viewer.entities.add({
+              name: 'High-Risk Zone',
+              polygon: {
+                hierarchy: Cesium.Cartesian3.fromDegreesArray([
+                  79.060, 30.730,
+                  79.070, 30.730,
+                  79.070, 30.740,
+                  79.060, 30.740
+                ]),
+                material: Cesium.Color.RED.withAlpha(0.6),
+                outline: true,
+                outlineColor: Cesium.Color.RED,
+                outlineWidth: 3,
+                height: 0,
+                classificationType: Cesium.ClassificationType.TERRAIN
+              },
+            });
+
+            // Low-Risk Zone (Green Polygon)
+            viewer.entities.add({
+              name: 'Low-Risk Zone',
+              polygon: {
+                hierarchy: Cesium.Cartesian3.fromDegreesArray([
+                  79.075, 30.735,
+                  79.085, 30.735,
+                  79.085, 30.745,
+                  79.075, 30.745
+                ]),
+                material: Cesium.Color.GREEN.withAlpha(0.6),
+                outline: true,
+                outlineColor: Cesium.Color.GREEN,
+                outlineWidth: 3,
+                height: 0,
+                classificationType: Cesium.ClassificationType.TERRAIN
+              },
+            });
+
+            console.log("Risk zones added successfully");
+          } catch (error) {
+            console.error("Error adding risk zones:", error);
+          }
+        };
+
+        const fetchDataFromTestApi = () => {
+          const mockApiData = {
+            status: 'OK',
+            message: 'Data successfully fetched from test API.',
+            current_risk_level: 'High',
+            active_alerts: ['Flash flood warning', 'Landslide advisory'],
+          };
+
+          setTimeout(() => {
+            setApiData(mockApiData);
+          }, 2000);
+        };
+
+        initializeCesium();
+        fetchDataFromTestApi();
+
+      }, []);
+
+      const containerClass = "h-full w-full flex flex-col font-inter bg-gray-900 text-gray-100";
+      const headerClass = "text-3xl font-bold mb-4 text-center text-blue-400";
+      const mapContainerClass = "flex-1 overflow-hidden relative rounded-xl shadow-lg border border-gray-700";
+      const overlayClass = "absolute bottom-4 left-4 right-4 p-4 bg-gray-800 bg-opacity-90 rounded-lg shadow-xl backdrop-blur-sm";
+      const loadingIndicatorClass = "text-center text-gray-400 animate-pulse";
+
+      return (
+        <div className={containerClass}>
+          <h1 className={headerClass}>SatarkMitra: Kedarnath Risk Zone Portal</h1>
+          <div className={mapContainerClass}>
+            <div ref={cesiumContainer} className="w-full h-full" id="cesium-container" />
+            
+            <div className={overlayClass}>
+              <h2 className="text-xl font-semibold mb-2 text-white">System Status</h2>
+              {cesiumError ? (
+                <div>
+                  <p className="text-center text-red-400 font-bold mb-2">{cesiumError}</p>
+                  <p className="text-center text-yellow-400 text-sm">
+                    Please check your Cesium Ion token and try again.
+                  </p>
+                </div>
+              ) : loading ? (
+                <div className={loadingIndicatorClass}>
+                  <p>Loading 3D Terrain and Imagery...</p>
+                  <p className="text-sm mt-1">Loading your Cesium Ion assets</p>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-2">
+                  <p className="flex items-center space-x-2">
+                    <span className="font-medium text-white">Current Risk Level:</span>
+                    <span className="px-3 py-1 text-sm font-semibold rounded-full bg-red-600 text-white">
+                      High
+                    </span>
+                  </p>
+                  <p className="font-medium text-white">Active Alerts:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li className="text-gray-200">Flash flood warning</li>
+                    <li className="text-gray-200">Landslide advisory</li>
+                  </ul>
+                  <p className="text-sm text-gray-300 mt-2">
+                    <span className="font-semibold">Using:</span> Cesium Ion Terrain + Imagery
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
