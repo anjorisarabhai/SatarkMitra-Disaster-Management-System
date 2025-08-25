@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SatarkMitra: Risk Zone Portal</title>
+  
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden; /* Prevent body scrollbars */
+    }
+  </style>
+
+  <!-- React, ReactDOM, and Babel CDNs -->
+  <!-- We use Babel to transpile JSX right in the browser -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+
+  <!-- CesiumJS CSS and JS CDNs -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.119.0/Build/Cesium/Widgets/widgets.css">
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.119.0/Build/Cesium/Cesium.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <div id="root" class="h-screen w-screen p-4 flex flex-col"></div>
+
+  <script type="text/babel">
+    'use strict';
+
+    // Main App component for the map and UI
+    const App = () => {
+      // State to hold the data from the simulated API call
+      const [apiData, setApiData] = React.useState(null);
+      // State to track loading status
+      const [loading, setLoading] = React.useState(true);
+      const [cesiumError, setCesiumError] = React.useState(null);
+      const [tokenError, setTokenError] = React.useState(null);
+      
+      // Cesium Ion access token
+      // NOTE: This token has been replaced with the user's provided token.
+      const CESIUM_ION_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0N2M3MzAxNC1iYzBjLTQzZmUtOTAwYi0wNzU2M2ZiOWQ0NWQiLCJpZCI6MzM1MTQzLCJpYXQiOjE3NTYxMjE5NzN9.ZD2nZdGY7ffYhXcNRimZMJrhkuT8vO4TPAuR1juIT8Y';
+      
+      const cesiumContainer = React.useRef(null);
+
+      React.useEffect(() => {
+        // Global error handler for unhandled promise rejections.
+        const handleRejection = (event) => {
+          // Check for a specific message related to authentication failure.
+          if (event.reason && event.reason.message && event.reason.message.includes("Invalid access token")) {
+            setCesiumError("Failed to load Cesium map. Please check your Cesium Ion access token.");
+            setLoading(false);
+            event.preventDefault(); // Prevents the default console error.
+          } else {
+             // For other errors, log to console for debugging
+             console.error("Unhandled Rejection:", event.reason);
+          }
+        };
+
+        window.addEventListener('unhandledrejection', handleRejection);
+        
+        // This effect runs once when the component mounts.
+        // It's responsible for initializing the map.
+        const initializeCesium = () => {
+          // Check if Cesium and the container exist
+          if (typeof window.Cesium !== 'undefined' && cesiumContainer.current) {
+            // Validate the access token before initializing
+            if (!CESIUM_ION_ACCESS_TOKEN || CESIUM_ION_ACCESS_TOKEN.length < 50) {
+              setTokenError("Please provide a valid Cesium Ion access token to load the map.");
+              setLoading(false);
+              return;
+            }
+
+            window.Cesium.Ion.defaultAccessToken = CESIUM_ION_ACCESS_TOKEN;
+
+            try {
+              // Create the Cesium viewer
+              const viewer = new window.Cesium.Viewer(cesiumContainer.current, {
+                terrainProvider: new window.Cesium.CesiumTerrainProvider({
+                  url: window.Cesium.IonResource.fromAssetId(1)
+                }),
+                timeline: false,
+                animation: false,
+                geocoder: false,
+                baseLayerPicker: false,
+                infoBox: false,
+                sceneModePicker: false,
+                homeButton: false,
+                navigationHelpButton: false,
+                fullscreenButton: false,
+                selectionIndicator: false,
+              });
+
+              // Set the initial camera view to Kedarnath
+              viewer.camera.flyTo({
+                destination: window.Cesium.Cartesian3.fromDegrees(79.066, 30.735, 10000), // Kedarnath, India
+                orientation: {
+                  heading: window.Cesium.Math.toRadians(0.0),
+                  pitch: window.Cesium.Math.toRadians(-25.0),
+                },
+                duration: 2, // Smooth fly-in animation
+              });
+
+              // Manually add high-risk and low-risk zones as entities
+              addRiskZones(viewer);
+            } catch (error) {
+              // Gracefully handle errors like invalid tokens
+              console.error("Cesium initialization error:", error);
+              setCesiumError("Failed to load Cesium map. Please check your Cesium Ion access token.");
+              setLoading(false);
+            }
+          }
+        };
+        
+        // Function to add the static risk zones
+        const addRiskZones = (viewer) => {
+          // High-Risk Zone (Red Polygon)
+          viewer.entities.add({
+            name: 'High-Risk Zone A',
+            polygon: {
+              hierarchy: window.Cesium.Cartesian3.fromDegreesArray([
+                79.064, 30.735,
+                79.065, 30.736,
+                79.066, 30.735,
+                79.065, 30.734,
+              ]),
+              material: window.Cesium.Color.RED.withAlpha(0.6),
+              outline: true,
+              outlineColor: window.Cesium.Color.RED,
+            },
+          });
+
+          // Low-Risk Zone (Green Polygon)
+          viewer.entities.add({
+            name: 'Low-Risk Zone B',
+            polygon: {
+              hierarchy: window.Cesium.Cartesian3.fromDegreesArray([
+                79.068, 30.737,
+                79.069, 30.738,
+                79.070, 30.737,
+                79.069, 30.736,
+              ]),
+              material: window.Cesium.Color.GREEN.withAlpha(0.6),
+              outline: true,
+              outlineColor: window.Cesium.Color.GREEN,
+            },
+          });
+          
+          // Another Low-Risk Zone
+          viewer.entities.add({
+            name: 'Low-Risk Zone C',
+            polygon: {
+              hierarchy: window.Cesium.Cartesian3.fromDegreesArray([
+                79.062, 30.733,
+                79.063, 30.734,
+                79.064, 30.733,
+                79.063, 30.732,
+              ]),
+              material: window.Cesium.Color.GREEN.withAlpha(0.6),
+              outline: true,
+              outlineColor: window.Cesium.Color.GREEN,
+            },
+          });
+        };
+
+        // Simulate a call to a test API endpoint
+        const fetchDataFromTestApi = () => {
+          // Mock API response
+          const mockApiData = {
+            status: 'OK',
+            message: 'Data successfully fetched from test API.',
+            current_risk_level: 'High',
+            active_alerts: ['Flash flood warning', 'Landslide advisory'],
+          };
+
+          // Simulate a network delay of 2 seconds
+          setTimeout(() => {
+            setApiData(mockApiData);
+            setLoading(false);
+          }, 2000);
+        };
+
+        // Start the process
+        initializeCesium();
+        
+        // Clean up the event listener when the component unmounts
+        return () => {
+          window.removeEventListener('unhandledrejection', handleRejection);
+        };
+      }, []); // Empty dependency array ensures this effect runs only once
+
+      // Tailwind CSS classes for styling
+      const containerClass = "h-full w-full flex flex-col font-inter bg-gray-900 text-gray-100";
+      const headerClass = "text-3xl font-bold mb-4 text-center text-blue-400";
+      const mapContainerClass = "flex-1 overflow-hidden relative rounded-xl shadow-lg";
+      const overlayClass = "absolute bottom-4 left-4 right-4 p-4 bg-gray-800 bg-opacity-70 rounded-lg shadow-xl backdrop-blur-sm transition-opacity duration-300";
+      const loadingIndicatorClass = "text-center text-gray-400 animate-pulse";
+      const statusBadgeClass = (riskLevel) => 
+        `px-3 py-1 text-sm font-semibold rounded-full ${riskLevel === 'High' ? 'bg-red-600' : 'bg-green-600'} text-white`;
+
+      return (
+        <div className={containerClass}>
+          <h1 className={headerClass}>SatarkMitra: Kedarnath Risk Zone Portal</h1>
+          <div className={mapContainerClass}>
+            {/* The Cesium viewer will be rendered inside this div */}
+            <div ref={cesiumContainer} className="w-full h-full" id="cesium-container" />
+            
+            {/* Overlay for API data */}
+            <div className={overlayClass}>
+              <h2 className="text-xl font-semibold mb-2">System Status</h2>
+              {tokenError ? (
+                <p className="text-center text-red-400 font-bold">{tokenError}</p>
+              ) : cesiumError ? (
+                <p className="text-center text-red-400">{cesiumError}</p>
+              ) : loading ? (
+                <p className={loadingIndicatorClass}>Connecting to test API...</p>
+              ) : (
+                <div className="flex flex-col space-y-2">
+                  <p className="flex items-center space-x-2">
+                    <span className="font-medium">Current Risk Level:</span>
+                    <span className={statusBadgeClass(apiData.current_risk_level)}>
+                      {apiData.current_risk_level}
+                    </span>
+                  </p>
+                  <p className="font-medium">Active Alerts:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    {apiData.active_alerts.map((alert, index) => (
+                      <li key={index} className="text-gray-300">{alert}</li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-gray-400 mt-2">
+                    <span className="font-semibold">API Message:</span> {apiData.message}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Render the App component into the root div
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
