@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SatarkMitra: Risk Zone Portal (NASA WorldWind)</title>
+  
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden; /* Prevent body scrollbars */
+    }
+    #worldwind-canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
+  <!-- React, ReactDOM, and Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+
+  <!-- NASA Web WorldWind CDN - now using a community-maintained, stable version -->
+  <script src="https://unpkg.com/@nasaworldwind/worldwind@0.9.0/build/dist/worldwind.min.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <div id="root" class="h-screen w-screen p-4 flex flex-col"></div>
+
+  <script type="text/babel">
+    'use strict';
+
+    // Main App component for the map and UI
+    const App = () => {
+      const [isWorldWindLoaded, setIsWorldWindLoaded] = React.useState(false);
+      
+      const mapContainer = React.useRef(null);
+      
+      React.useEffect(() => {
+        // Since we are now using a stable CDN, we can use a simpler approach.
+        // We still check if the library is loaded to be safe.
+        const checkWorldWind = () => {
+          if (typeof WorldWind !== "undefined") {
+            setIsWorldWindLoaded(true);
+          } else {
+            // If for some reason it's not loaded, we wait and check again.
+            // This is a safety check for very slow network conditions.
+            setTimeout(checkWorldWind, 100);
+          }
+        };
+        
+        checkWorldWind();
+      }, []);
+
+      React.useEffect(() => {
+        // This effect runs only when the WorldWind library has been confirmed as loaded.
+        if (!isWorldWindLoaded) {
+          return;
+        }
+
+        // --- 1. WorldWindow Setup ---
+        const wwd = new WorldWind.WorldWindow("worldwind-canvas");
+
+        // --- 2. Add Layers ---
+        const layers = [
+            // Standard layers from WorldWind
+            {layer: new WorldWind.BMNGOneImageLayer(), enabled: true},
+            {layer: new WorldWind.BMNGLandsatLayer(), enabled: false},
+            {layer: new WorldWind.BingAerialWithLabelsLayer(), enabled: true},
+            {layer: new WorldWind.CompassLayer(), enabled: true},
+            {layer: new WorldWind.ViewControlsLayer(wwd), enabled: true},
+            {layer: new WorldWind.CoordinatesDisplayLayer(wwd), enabled: true},
+        ];
+
+        // Add the layers to the WorldWindow
+        layers.forEach(function (layer) {
+            layer.layer.enabled = layer.enabled;
+            wwd.addLayer(layer.layer);
+        });
+
+        // --- 3. Add Risk Zones ---
+        const riskLayer = new WorldWind.RenderableLayer("Risk Zones");
+        wwd.addLayer(riskLayer);
+
+        const addRiskZones = () => {
+          // Create a new ShapeAttributes object for the high-risk zone
+          const highRiskAttributes = new WorldWind.ShapeAttributes(null);
+          highRiskAttributes.interiorColor = new WorldWind.Color(1, 0, 0, 0.8); // Red for high risk
+          highRiskAttributes.outlineColor = new WorldWind.Color(1, 0, 0, 0.8);
+          highRiskAttributes.drawInterior = true;
+          highRiskAttributes.drawOutline = true;
+          
+          // High-Risk Zone (Red Polygon)
+          const highRiskBoundaries = [
+            new WorldWind.Position(30.735, 79.064, 100),
+            new WorldWind.Position(30.736, 79.065, 100),
+            new WorldWind.Position(30.735, 79.066, 100),
+            new WorldWind.Position(30.734, 79.065, 100)
+          ];
+          const highRiskPolygon = new WorldWind.SurfacePolygon(highRiskBoundaries, highRiskAttributes);
+          riskLayer.addRenderable(highRiskPolygon);
+          
+          // Create a new ShapeAttributes object for the low-risk zone
+          const lowRiskAttributes = new WorldWind.ShapeAttributes(null);
+          lowRiskAttributes.interiorColor = new WorldWind.Color(0, 1, 0, 0.8); // Green for low risk
+          lowRiskAttributes.outlineColor = new WorldWind.Color(0, 1, 0, 0.8);
+          lowRiskAttributes.drawInterior = true;
+          lowRiskAttributes.drawOutline = true;
+
+          // Low-Risk Zone (Green Polygon)
+          const lowRiskBoundaries = [
+            new WorldWind.Position(30.737, 79.068, 100),
+            new WorldWind.Position(30.738, 79.069, 100),
+            new WorldWind.Position(30.737, 79.070, 100),
+            new WorldWind.Position(30.736, 79.069, 100)
+          ];
+          const lowRiskPolygon = new WorldWind.SurfacePolygon(lowRiskBoundaries, lowRiskAttributes);
+          riskLayer.addRenderable(lowRiskPolygon);
+        };
+        addRiskZones();
+
+        // --- 4. Set Initial Camera View ---
+        // We're changing the altitude from 10,000 to 10,000,000 meters to get a better view of the globe.
+        wwd.goTo(new WorldWind.Position(30.735, 79.066, 10000000)); // Kedarnath, India
+
+      }, [isWorldWindLoaded]); // This effect now depends on the loading state.
+
+      // Tailwind CSS classes for styling
+      const containerClass = "h-full w-full flex flex-col font-inter bg-gray-900 text-gray-100";
+      const headerClass = "text-3xl font-bold mb-4 text-center text-blue-400";
+      const mapContainerClass = "flex-1 overflow-hidden relative rounded-xl shadow-lg";
+      const loadingIndicatorClass = "text-center text-gray-400 animate-pulse";
+      
+      const worldwindLoadingMessage = "Loading NASA Web WorldWind library...";
+
+      return (
+        <div className={containerClass}>
+          <h1 className={headerClass}>SatarkMitra: Kedarnath Risk Zone Portal</h1>
+          <div className={mapContainerClass} ref={mapContainer}>
+            {/* Conditional rendering based on whether the library is loaded */}
+            {isWorldWindLoaded ? (
+              <canvas id="worldwind-canvas"></canvas>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className={loadingIndicatorClass}>{worldwindLoadingMessage}</p>
+              </div>
+            )}
+            
+            {/* Overlay for API data was removed per your request */}
+          </div>
+        </div>
+      );
+    };
+
+    // Render the App component into the root div
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
