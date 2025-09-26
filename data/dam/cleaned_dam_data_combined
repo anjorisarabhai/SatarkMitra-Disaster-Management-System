@@ -12,7 +12,7 @@ if 'Storage' in df.columns:
 if 'Level' in df.columns:
     df['Level'] = df['Level'].interpolate(method='linear')
 
-output_path = 'dam_data_combined_modified.csv'
+output_path = 'data\dam\dam_data_combined_modified.csv'
 df.to_csv(output_path, index=False)
 
 print(df.head())

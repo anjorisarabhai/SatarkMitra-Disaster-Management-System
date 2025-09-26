@@ -1,1 +1,19 @@
-api_key.txt
+# Frontend Dependencies
+frontend/node_modules/
+
+# Frontend Build Output
+frontend/.next/
+
+# Frontend Environment Variables
+frontend/.env.local
+frontend/.env.development.local
+
+# Your API Key
+frontend/api_key.txt
+# Ignore API keys
+data/rainfall/api_key.txt
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
