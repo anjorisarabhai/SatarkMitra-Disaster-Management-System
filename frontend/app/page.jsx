@@ -6,7 +6,6 @@ import {
   MapPin,
   AlertTriangle,
   Phone,
-  Building,
   ClipboardList,
   Home,
   Shield,
@@ -14,9 +13,115 @@ import {
   Route,
   X,
   Plus,
+  Droplets, // Added for AI Panel
+  Waves     // Added for AI Panel
 } from "lucide-react"
 
-// --- Initial Mock Data ---
+// ==========================================
+// 1. AI PREDICTION COMPONENT (NEW FEATURE)
+// ==========================================
+const FloodAlertPanel = () => {
+  const [riverLevel, setRiverLevel] = useState('');
+  const [rainfall, setRainfall] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handlePredict = async () => {
+    if (!riverLevel || !rainfall) return alert("Please enter values.");
+    setLoading(true);
+    setResult(null);
+
+    try {
+      // Connect to Flask Backend (Port 8000)
+      const res = await fetch('http://127.0.0.1:8000/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ river_level: riverLevel, rainfall: rainfall }),
+      });
+      const data = await res.json();
+      if (data.status === 'success') setResult(data);
+      else alert(data.message);
+    } catch (e) {
+      alert("Failed to connect to SatarkMitra AI Server. Is 'python app.py' running?");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="card animate-fadeInUp max-w-2xl mx-auto mt-6">
+      <div className="card-header">
+        <h3 className="card-title flex items-center gap-2">
+          <Activity className="icon text-blue-500" /> AI Prediction Core
+        </h3>
+        <p className="card-description">Hybrid Ensemble Model (XGB + SVM + GRU)</p>
+      </div>
+      
+      <div className="card-content">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="form-group">
+            <label className="block text-sm font-medium mb-1">River Level (sq km)</label>
+            <div className="flex items-center border rounded px-3 py-2 bg-gray-50 dark:bg-gray-800">
+               <Waves size={18} className="text-blue-500 mr-2" />
+               <input 
+                 type="number" 
+                 className="w-full bg-transparent outline-none"
+                 placeholder="e.g. 1.5"
+                 value={riverLevel}
+                 onChange={(e) => setRiverLevel(e.target.value)}
+               />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="block text-sm font-medium mb-1">Rainfall (mm)</label>
+            <div className="flex items-center border rounded px-3 py-2 bg-gray-50 dark:bg-gray-800">
+               <Droplets size={18} className="text-blue-500 mr-2" />
+               <input 
+                 type="number" 
+                 className="w-full bg-transparent outline-none"
+                 placeholder="e.g. 12.0"
+                 value={rainfall}
+                 onChange={(e) => setRainfall(e.target.value)}
+               />
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={handlePredict} 
+          disabled={loading}
+          className="btn btn-primary w-full py-3 flex justify-center items-center gap-2 font-bold"
+        >
+          {loading ? "Analyzing 23 Features..." : "Run Risk Analysis"}
+        </button>
+
+        {result && (
+          <div className={`mt-6 p-4 rounded-lg border-l-4 shadow-sm ${result.alert_level === 'HIGH' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'}`}>
+            <div className="flex items-start gap-3">
+              {result.alert_level === 'HIGH' ? <AlertTriangle className="text-red-600 h-8 w-8" /> : <Check className="text-green-600 h-8 w-8" />}
+              <div>
+                <h4 className={`font-bold text-lg ${result.alert_level === 'HIGH' ? 'text-red-800' : 'text-green-800'}`}>
+                  {result.alert_level} RISK DETECTED
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">
+                  AI Confidence: <strong>{result.flood_probability}%</strong>
+                </p>
+                
+                {/* Advanced Details */}
+                <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 grid grid-cols-2 gap-x-6 gap-y-1">
+                  <span>XGBoost Vote: <b className={result.model_details.xgboost_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.xgboost_risk ? 'DANGER' : 'SAFE'}</b></span>
+                  <span>SVM Vote: <b className={result.model_details.svm_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.svm_risk ? 'DANGER' : 'SAFE'}</b></span>
+                  <span className="col-span-2 mt-1">GRU Forecast: {result.model_details.gru_forecast.toFixed(2)} sq km</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- INITIAL MOCK DATA ---
 const initialMockAlerts = [
   { id: 1, type: "critical", title: "Flash Flood Warning", location: "Mandakini River", time: "2 min ago", acknowledged: false },
   { id: 2, type: "warning", title: "Rising Water Levels", location: "Gaurikund Station", time: "15 min ago", acknowledged: true },
@@ -25,27 +130,27 @@ const initialMockAlerts = [
 
 const initialEmergencyContacts = [
     { id: 1, name: "NDRF Command Center", role: "Disaster Response", contact: "108" },
-    { id:2, name: "State Disaster Mgmt.", role: "Coordination", contact: "1070" },
+    { id: 2, name: "State Disaster Mgmt.", role: "Coordination", contact: "1070" },
     { id: 3, name: "District Control Room", role: "Local Operations", contact: "1077" },
 ];
 
-// Other data sets remain the same
 const waterStations = [
   { id: "station-a", name: "Mandakini River", location: "Near Temple Bridge", currentLevel: 8.5, status: "critical", capacity: 10.0, lastUpdated: "2 min ago" },
   { id: "station-b", name: "Gaurikund Station", location: "Entry Point", currentLevel: 6.2, status: "warning", capacity: 9.0, lastUpdated: "1 min ago" },
   { id: "station-c", name: "Kedarnath Base", location: "Downstream Checkpoint", currentLevel: 4.1, status: "normal", capacity: 8.5, lastUpdated: "3 min ago" },
 ];
+
 const emergencyProtocols = {
   normal: ["Monitor water levels every 6 hours.", "Weekly check of communication systems."],
   warning: ["Increase monitoring frequency to every hour.", "Place emergency response teams on standby."],
   critical: ["Activate Emergency Operations Center (EOC).", "Issue immediate evacuation orders for high-risk zones."],
 };
+
 const nearbyResources = [
     { id: 1, name: "Govt. Primary School Shelter", location: "Rampur Village, 2km away", capacity: 150, status: "Open" },
     { id: 2, name: "Community Hall Shelter", location: "Sitapur, 3km away", capacity: 250, status: "Open" },
     { id: 3, name: "Old Temple Guesthouse", location: "Gaurikund, 1.5km away", capacity: 80, status: "Full" },
 ];
-
 
 export default function FloodManagementApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -64,32 +169,24 @@ export default function FloodManagementApp() {
   const [newAlert, setNewAlert] = useState({ type: 'info', title: '', location: '' });
   const [newContact, setNewContact] = useState({ name: '', role: '', contact: '' });
 
-  // --- Event Handlers for adding new items ---
+  // --- Event Handlers ---
   const handleAddAlert = (e) => {
     e.preventDefault();
-    const newAlertObject = {
-      id: Date.now(),
-      ...newAlert,
-      time: 'Just now',
-      acknowledged: false,
-    };
+    const newAlertObject = { id: Date.now(), ...newAlert, time: 'Just now', acknowledged: false };
     setAlerts([newAlertObject, ...alerts]);
-    setIsAddAlertModalOpen(false); // Close modal
-    setNewAlert({ type: 'info', title: '', location: '' }); // Reset form
+    setIsAddAlertModalOpen(false);
+    setNewAlert({ type: 'info', title: '', location: '' });
   };
 
   const handleAddContact = (e) => {
     e.preventDefault();
-    const newContactObject = {
-      id: Date.now(),
-      ...newContact,
-    };
+    const newContactObject = { id: Date.now(), ...newContact };
     setContacts([...contacts, newContactObject]);
-    setIsAddContactModalOpen(false); // Close modal
-    setNewContact({ name: '', role: '', contact: '' }); // Reset form
+    setIsAddContactModalOpen(false);
+    setNewContact({ name: '', role: '', contact: '' });
   };
   
-  // Other useEffects and functions remain the same...
+  // --- Effects ---
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
@@ -138,16 +235,22 @@ export default function FloodManagementApp() {
   };
 
   return (
-    <> {/* Use a Fragment to allow modals to be outside the main container */}
+    <> 
       <div className="container">
-        {/* Header and Tabs remain the same... */}
+        {/* Header */}
         <div className="main-header">
           <h1>Kedarnath Flood Management</h1>
           <p>Real-time monitoring and emergency response dashboard</p>
         </div>
+
+        {/* --- 2. UPDATED TABS LIST --- */}
         <div className="tabs-list">
             <button className={`tab-trigger ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}><MapPin /> Dashboard</button>
             <button className={`tab-trigger ${activeTab === 'water-levels' ? 'active' : ''}`} onClick={() => setActiveTab('water-levels')}><Activity /> Water Levels</button>
+            
+            {/* NEW AI BUTTON */}
+            <button className={`tab-trigger ${activeTab === 'prediction' ? 'active' : ''}`} onClick={() => setActiveTab('prediction')}><Shield /> AI Prediction</button>
+            
             <button className={`tab-trigger ${activeTab === 'alerts' ? 'active' : ''}`} onClick={() => setActiveTab('alerts')}><AlertTriangle /> Alerts</button>
             <button className={`tab-trigger ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}><Phone /> Contacts</button>
             <button className={`tab-trigger ${activeTab === 'protocols' ? 'active' : ''}`} onClick={() => setActiveTab('protocols')}><ClipboardList /> Protocols</button>
@@ -155,7 +258,7 @@ export default function FloodManagementApp() {
         </div>
 
         <main>
-          {/* Dashboard Tab remains the same... */}
+          {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="dashboard-grid animate-fadeInUp">
                 <div className="overview-cards">
@@ -173,14 +276,26 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Water Levels Tab remains the same... */}
+          {/* Water Levels Tab */}
           {activeTab === 'water-levels' && (
              <div className="grid-container grid-cols-3-responsive animate-fadeInUp">
                 {waterStations.map(station => (<div key={station.id} className="card"><div className="card-header"><div className="flex-between"><h3 className="card-title">{station.name}</h3><span className={`badge ${getStatusClass(station.status)}`}>{station.status}</span></div><p className="card-description">{station.location}</p></div><div className="card-content"><div className="water-level-display"><span className="level-value">{station.currentLevel}m</span><span className="level-capacity">/ {station.capacity}m</span></div><div className="progress-bar-container"><div className={`progress-bar ${getStatusClass(station.status)}`} style={{width: `${(station.currentLevel / station.capacity) * 100}%`}}></div></div><p className="text-xs text-muted-foreground">Last updated: {station.lastUpdated}</p></div></div>))}
             </div>
           )}
           
-          {/* ALERTS TAB with Add button */}
+          {/* --- 3. NEW AI PREDICTION TAB CONTENT --- */}
+          {activeTab === 'prediction' && (
+            <div className="animate-fadeInUp">
+               <div className="tab-header text-center mb-6">
+                  <h2>Live Flood Prediction</h2>
+                  <p className="text-gray-500">Real-time analysis using Hybrid Deep Learning Models</p>
+               </div>
+               <FloodAlertPanel />
+            </div>
+          )}
+          {/* ----------------------------------- */}
+
+          {/* ALERTS TAB */}
           {activeTab === 'alerts' && (
               <div className="animate-fadeInUp">
                   <div className="tab-header">
@@ -206,7 +321,7 @@ export default function FloodManagementApp() {
               </div>
           )}
 
-          {/* CONTACTS TAB with Add button */}
+          {/* CONTACTS TAB */}
           {activeTab === 'contacts' && (
             <div className="animate-fadeInUp">
                 <div className="tab-header">
@@ -228,7 +343,7 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Protocols Tab remains the same... */}
+          {/* Protocols Tab */}
           {activeTab === 'protocols' && (
             <div className="grid-container grid-cols-3-responsive animate-fadeInUp">
               <div className="card"><h3 className="card-title protocol-title normal">Normal Conditions</h3><ul className="protocol-list">{emergencyProtocols.normal.map((item, i) => <li key={i}><Check /> {item}</li>)}</ul></div>
@@ -237,7 +352,7 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Resources Tab remains the same... */}
+          {/* Resources Tab */}
           {activeTab === 'resources' && (
             <div className="animate-fadeInUp">
               {nearbyResources.map(resource => (
