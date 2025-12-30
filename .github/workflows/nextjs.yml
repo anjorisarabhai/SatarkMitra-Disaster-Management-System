@@ -62,8 +62,11 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
 
       - name: Build with Next.js
+        env:
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-        
+ 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
