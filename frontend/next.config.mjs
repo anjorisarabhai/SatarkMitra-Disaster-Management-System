@@ -7,6 +7,8 @@ const nextConfig = {
   basePath: `/${repoName}`,
   assetPrefix: `/${repoName}/`,
 
+  trailingSlash: true,   // 🔴 THIS IS THE MISSING PIECE
+
   images: {
     unoptimized: true,
   },
