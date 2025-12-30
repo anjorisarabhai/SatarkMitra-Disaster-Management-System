@@ -1,5 +1,5 @@
 import "./global.css"; // Keep this for your root color variables and Tailwind
-import "./styles/main.css"; // Import your new structured styles
+import "./Styles/main.css"; // Import your new structured styles
 
 export default function RootLayout({ children }) {
   return (
