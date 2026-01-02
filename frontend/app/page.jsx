@@ -1,6 +1,6 @@
-const BACKEND_URL = "https://satarkmitra-backend-2p2d.onrender.com";
-
 "use client"
+
+const BACKEND_URL = "https://satarkmitra-backend-2p2d.onrender.com";
 
 import { useState, useEffect } from "react"
 import {
