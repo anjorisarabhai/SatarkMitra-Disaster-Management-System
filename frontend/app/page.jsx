@@ -1,3 +1,5 @@
+const BACKEND_URL = "https://satarkmitra-backend-2p2d.onrender.com";
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -33,11 +35,15 @@ const FloodAlertPanel = () => {
 
     try {
       // Connect to Flask Backend (Port 8000)
-      const res = await fetch('http://127.0.0.1:8000/api/predict', {
+      const res = await fetch(`${BACKEND_URL}/api/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ river_level: riverLevel, rainfall: rainfall }),
+        body: JSON.stringify({
+          river_level: riverLevel,
+          rainfall: rainfall
+        }),
       });
+
       const data = await res.json();
       if (data.status === 'success') setResult(data);
       else alert(data.message);
