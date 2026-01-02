@@ -5,4 +5,5 @@ numpy
 pandas
 scikit-learn
 joblib
-tensorflow
+tensorflow-cpu
+xgboost
