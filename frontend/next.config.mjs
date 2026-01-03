@@ -1,13 +1,8 @@
-const repoName = "SatarkMitra-Disaster-Management-System";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
-
-  basePath: `/${repoName}`,
-  assetPrefix: `/${repoName}/`,
-
-  trailingSlash: true,   // 🔴 THIS IS THE MISSING PIECE
+  // output: "export",  <-- Comment this out for local dev
+  // basePath: "/SatarkMitra-Disaster-Management-System", <-- Comment out
+  // assetPrefix: "/SatarkMitra-Disaster-Management-System/", <-- Comment out
 
   images: {
     unoptimized: true,

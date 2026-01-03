@@ -22,6 +22,8 @@ export default function DelhiPanel() {
         })
       })
 
+      if (!res.ok) throw new Error("Server error")
+
       const data = await res.json()
       if (data.status === "success") setResult(data)
       else alert(data.message)
@@ -34,8 +36,8 @@ export default function DelhiPanel() {
   }
 
   return (
-    <div className="card max-w-xl mx-auto">
-      <h3 className="card-title flex gap-2">
+    <div className="card max-w-xl mx-auto p-4">
+      <h3 className="card-title flex gap-2 items-center">
         <CloudRain /> Delhi Water‑Logging Risk
       </h3>
 
@@ -43,23 +45,30 @@ export default function DelhiPanel() {
         type="number"
         placeholder="Drainage Capacity"
         value={drainage}
-        onChange={e => setDrainage(e.target.value)}
+        onChange={e => setDrainage(Number(e.target.value))}
+        className="input mt-3"
       />
 
       <input
         type="number"
         placeholder="Elevation (m)"
         value={elevation}
-        onChange={e => setElevation(e.target.value)}
+        onChange={e => setElevation(Number(e.target.value))}
+        className="input mt-2"
       />
 
-      <button onClick={runDelhiPrediction} disabled={loading}>
+      <button
+        onClick={runDelhiPrediction}
+        disabled={loading}
+        aria-busy={loading}
+        className="btn btn-primary mt-3"
+      >
         {loading ? "Analyzing..." : "Check Risk"}
       </button>
 
       {result && (
         <div className="mt-4">
-          <h4>
+          <h4 className="flex items-center gap-2">
             {result.water_logging_risk === "CRITICAL"
               ? <AlertTriangle className="text-red-500" />
               : <Check className="text-green-500" />

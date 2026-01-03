@@ -21,7 +21,7 @@ import {
 
 // CRITICAL FIX: Lazy load DelhiPanel to prevent page timeout
 const DelhiPanel = dynamic(
-  () => import('@/src/component/DelhiPanel'),
+  () => import('../src/component/DelhiPanel'),
   {
     loading: () => (
       <div className="loading-overlay">
