@@ -1,6 +1,6 @@
 earthengine-api
 geemap
-ipywidgets jupyter 
+ipywidgets  
 pandas
 numpy
 matplotlib
