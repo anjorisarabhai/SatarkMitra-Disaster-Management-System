@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// 🔧 Fix default marker issue in Next.js
+// 🔧 Fix Leaflet marker icons in Next.js
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -15,14 +15,21 @@ L.Icon.Default.mergeOptions({
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
 
-// 🎨 Risk‑based marker colors
+// 🎨 Risk → Marker Color
 const getMarkerColor = (risk) => {
-  if (risk === "CRITICAL") return "red"
-  if (risk === "HIGH") return "orange"
-  if (risk === "MODERATE") return "gold"
-  return "green"
+  switch (risk) {
+    case "CRITICAL":
+      return "red"
+    case "HIGH":
+      return "orange"
+    case "MODERATE":
+      return "gold"
+    default:
+      return "green"
+  }
 }
 
+// 🧭 Create colored marker icon
 const createIcon = (color) =>
   new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
@@ -34,7 +41,12 @@ const createIcon = (color) =>
     shadowSize: [41, 41],
   })
 
-export default function DelhiHotspotMap({ zones }) {
+/**
+ * Props:
+ * zones → array of hotspot objects from backend
+ * simulatedRain (optional) → for future rainfall slider (OPTION A)
+ */
+export default function DelhiHotspotMap({ zones = [], simulatedRain = null }) {
   return (
     <MapContainer
       center={[28.6139, 77.2090]}
@@ -47,31 +59,42 @@ export default function DelhiHotspotMap({ zones }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {zones.map((zone, idx) => (
-        <Marker
-          key={idx}
-          position={[zone.latitude, zone.longitude]}
-          icon={createIcon(getMarkerColor(zone.risk_status))}
-        >
-          {/* 🟡 HOVER TOOLTIP */}
-          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-            <div className="text-xs">
-              <b>{zone.zone_name}</b><br />
-              Risk: {zone.risk_status}<br />
-              Elevation: {zone.details.elevation} m
-            </div>
-          </Tooltip>
+      {zones.map((zone, idx) => {
+        const risk = zone?.risk_status ?? "LOW"
+        const details = zone?.details ?? {}
 
-          {/* 🔵 CLICK POPUP */}
-          <Popup>
-            <b>{zone.zone_name}</b><br />
-            Risk: {zone.risk_status}<br />
-            Score: {zone.risk_score}<br />
-            Elevation: {zone.details.elevation} m<br />
-            Drainage: {zone.details.drainage}
-          </Popup>
-        </Marker>
-      ))}
+        return (
+          <Marker
+            key={idx}
+            position={[zone.latitude, zone.longitude]}
+            icon={createIcon(getMarkerColor(risk))}
+          >
+            {/* 🟡 HOVER INFO */}
+            <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+              <div className="text-xs leading-tight">
+                <b>{zone.zone_name}</b>
+                <br />
+                Risk: {risk}
+                <br />
+                Elevation: {details.elevation ?? "N/A"} m
+              </div>
+            </Tooltip>
+
+            {/* 🔵 CLICK DETAILS */}
+            <Popup>
+              <b>{zone.zone_name}</b>
+              <br />
+              <b>Risk:</b> {risk}
+              <br />
+              <b>Score:</b> {zone.risk_score}
+              <br />
+              <b>Elevation:</b> {details.elevation ?? "N/A"} m
+              <br />
+              <b>Drainage:</b> {details.drainage ?? "Unknown"}
+            </Popup>
+          </Marker>
+        )
+      })}
     </MapContainer>
   )
 }
