@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// 🔧 Fix Leaflet marker icons in Next.js
+// 🔧 Fix Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -23,7 +23,6 @@ const getMarkerColor = (risk) => {
   return "green"
 }
 
-// 🧭 Create colored marker
 const createIcon = (color) =>
   new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
@@ -48,36 +47,29 @@ export default function DelhiHotspotMap({ zones = [] }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {zones.map((zone, idx) => {
-        const risk = zone.risk_status || "LOW"
-        const details = zone.details || {}
-
-        return (
-          <Marker
-            key={idx}
-            position={[zone.latitude, zone.longitude]}
-            icon={createIcon(getMarkerColor(risk))}
-          >
-            {/* 🟡 Hover Info */}
-            <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-              <div className="text-xs leading-tight">
-                <b>{zone.zone_name}</b><br />
-                Risk: {risk}<br />
-                Elevation: {details.elevation} m
-              </div>
-            </Tooltip>
-
-            {/* 🔵 Click Info */}
-            <Popup>
+      {zones.map((zone, idx) => (
+        <Marker
+          key={idx}
+          position={[zone.latitude, zone.longitude]}
+          icon={createIcon(getMarkerColor(zone.risk_status))}
+        >
+          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+            <div className="text-xs">
               <b>{zone.zone_name}</b><br />
-              <b>Risk:</b> {risk}<br />
-              <b>Score:</b> {zone.risk_score}<br />
-              <b>Elevation:</b> {details.elevation} m<br />
-              <b>Drainage:</b> {details.drainage}
-            </Popup>
-          </Marker>
-        )
-      })}
+              Risk: {zone.risk_status}<br />
+              Score: {zone.risk_score}
+            </div>
+          </Tooltip>
+
+          <Popup>
+            <b>{zone.zone_name}</b><br />
+            <b>Risk:</b> {zone.risk_status}<br />
+            <b>Score:</b> {zone.risk_score}<br />
+            <b>Elevation:</b> {zone.details?.elevation} m<br />
+            <b>Drainage:</b> {zone.details?.drainage}
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   )
 }

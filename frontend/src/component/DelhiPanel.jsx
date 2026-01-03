@@ -5,7 +5,9 @@ import {
   CloudRain,
   AlertTriangle,
   Check,
-  MapPin
+  MapPin,
+  Play,
+  Pause
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import DelhiMapLegend from "./DelhiMapLegend"
@@ -20,8 +22,11 @@ export default function DelhiPanel() {
   const [cityWeather, setCityWeather] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // 🔥 USP: Rainfall Simulation Slider
+  // 🌧️ USP FEATURE: Rainfall Simulation
   const [simulatedRain, setSimulatedRain] = useState(0)
+
+  // 🎬 Time‑lapse
+  const [playing, setPlaying] = useState(false)
 
   const fetchDelhiHotspots = async () => {
     setLoading(true)
@@ -44,7 +49,16 @@ export default function DelhiPanel() {
     fetchDelhiHotspots()
   }, [])
 
-  // 🔮 Apply rainfall simulation on frontend
+  // 🎬 Time‑lapse effect
+  useEffect(() => {
+    if (!playing) return
+    const interval = setInterval(() => {
+      setSimulatedRain((prev) => (prev >= 50 ? 0 : prev + 5))
+    }, 800)
+    return () => clearInterval(interval)
+  }, [playing])
+
+  // 🔹 Risk simulation logic
   const applyRainSimulation = (zone) => {
     let score = zone.risk_score
 
@@ -62,6 +76,25 @@ export default function DelhiPanel() {
 
   const simulatedZones = zones.map(applyRainSimulation)
 
+  // 🔥 TOP‑5 DANGEROUS HOTSPOTS
+  const topHotspots = [...simulatedZones]
+    .sort((a, b) => b.risk_score - a.risk_score)
+    .slice(0, 5)
+
+  // 🚨 Action Suggestions
+  const getActionSuggestion = (risk) => {
+    switch (risk) {
+      case "CRITICAL":
+        return "🚨 Immediate intervention, road closure & pumps required"
+      case "HIGH":
+        return "⚠️ Traffic diversion & emergency teams on standby"
+      case "MODERATE":
+        return "🛠️ Clear drains & monitor closely"
+      default:
+        return "✅ Monitor only"
+    }
+  }
+
   const getRiskIcon = (status) => {
     if (status === "CRITICAL") return <AlertTriangle className="text-red-600" />
     if (status === "HIGH") return <AlertTriangle className="text-orange-500" />
@@ -69,28 +102,22 @@ export default function DelhiPanel() {
     return <Check className="text-green-600" />
   }
 
-  const getRiskColor = (status) => {
-    if (status === "CRITICAL") return "border-red-500 bg-red-50"
-    if (status === "HIGH") return "border-orange-400 bg-orange-50"
-    if (status === "MODERATE") return "border-yellow-400 bg-yellow-50"
-    return "border-green-400 bg-green-50"
-  }
-
   return (
-    <div className="card max-w-5xl mx-auto p-4">
-      <h3 className="card-title flex gap-2 items-center mb-1">
-        <CloudRain /> Delhi Water‑Logging Hotspot Monitor
+    <div className="card max-w-6xl mx-auto p-4">
+      <h3 className="card-title flex gap-2 items-center mb-2">
+        <CloudRain /> Delhi Water‑Logging Decision Dashboard
       </h3>
 
       <p className="text-sm text-gray-600 mb-4">
-        Zone‑wise risk assessment with rainfall scenario simulation
+        Zone‑wise flood risk with predictive rainfall simulation
       </p>
 
-      {/* 🌧️ WHAT‑IF RAINFALL SLIDER (USP) */}
+      {/* 🌧️ WHAT‑IF + 🎬 TIMELAPSE */}
       <div className="mb-4 p-4 rounded border bg-blue-50">
         <p className="font-semibold mb-2">
-          🌧️ Simulate Rainfall: <b>{simulatedRain} mm/hr</b>
+          🌧️ Rainfall Simulation: <b>{simulatedRain} mm/hr</b>
         </p>
+
         <input
           type="range"
           min="0"
@@ -99,51 +126,49 @@ export default function DelhiPanel() {
           onChange={(e) => setSimulatedRain(Number(e.target.value))}
           className="w-full"
         />
-        <p className="text-xs text-gray-600 mt-1">
-          See how hotspot risks escalate during heavy rainfall
-        </p>
+
+        <button
+          onClick={() => setPlaying(!playing)}
+          className="btn btn-sm mt-3"
+        >
+          {playing ? <Pause size={16} /> : <Play size={16} />}
+          {playing ? " Pause Replay" : " Play Time‑lapse"}
+        </button>
       </div>
 
-      {/* 🗺️ MAP + LEGEND */}
+      {/* 🗺️ MAP */}
       <div className="relative mb-6">
         <DelhiHotspotMap zones={simulatedZones} />
-
         <div className="absolute bottom-4 left-4 z-[1000]">
           <DelhiMapLegend />
         </div>
       </div>
 
-      {/* 🔄 REFRESH */}
-      <button
-        onClick={fetchDelhiHotspots}
-        disabled={loading}
-        className="btn btn-primary mb-4"
-      >
-        {loading ? "Updating..." : "Refresh Live Data"}
-      </button>
+      {/* 🔥 TOP‑5 HOTSPOTS */}
+      <div className="mb-6">
+        <h4 className="font-semibold mb-2">🚨 Top‑5 Most Dangerous Hotspots</h4>
+        <ol className="list-decimal pl-5 space-y-1">
+          {topHotspots.map((z, i) => (
+            <li key={i}>
+              <b>{z.zone_name}</b> — {z.risk_status} ({z.risk_score})
+            </li>
+          ))}
+        </ol>
+      </div>
 
-      {/* 📍 ZONE CARDS */}
+      {/* 🚨 ACTION SUGGESTIONS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {simulatedZones.map((zone, index) => (
-          <div
-            key={index}
-            className={`p-4 rounded border-l-4 ${getRiskColor(zone.risk_status)}`}
-          >
-            <h4 className="flex items-center gap-2 font-semibold mb-1">
-              <MapPin size={16} />
-              {zone.zone_name}
+        {simulatedZones.map((zone, i) => (
+          <div key={i} className="p-3 rounded border">
+            <h4 className="font-semibold flex items-center gap-2">
+              <MapPin size={14} /> {zone.zone_name}
             </h4>
-
             <p className="flex items-center gap-2">
               {getRiskIcon(zone.risk_status)}
-              <b>{zone.risk_status} RISK</b>
+              <b>{zone.risk_status}</b>
             </p>
-
-            <p>Risk Score: <b>{zone.risk_score}</b></p>
-
-            <p className="text-sm text-gray-600 mt-1">
-              Elevation: {zone.details.elevation} m<br />
-              Drainage: {zone.details.drainage}
+            <p className="text-sm mt-1">
+              {getActionSuggestion(zone.risk_status)}
             </p>
           </div>
         ))}
