@@ -13,12 +13,16 @@ import {
   Route,
   X,
   Plus,
-  CloudRain,
-  Droplets,
-  Waves
+  CloudRain, // Import the CloudRain icon
+  Droplets,  // Import Droplets icon
+  Waves      // Import Waves icon
 } from "lucide-react"
 
-// --- KEDARNATH FLOOD PREDICTION COMPONENT ---
+// Import the DelhiPanel component (Ensure this file exists!)
+// If you haven't created it yet, comment this line out.
+import DelhiPanel from '@/src/component/DelhiPanel';
+
+// --- AI PREDICTION COMPONENT (Fixed URL) ---
 const FloodAlertPanel = () => {
   const [riverLevel, setRiverLevel] = useState('');
   const [rainfall, setRainfall] = useState('');
@@ -32,6 +36,7 @@ const FloodAlertPanel = () => {
 
     try {
       // Connect to Flask Backend (Port 8000)
+      // FIXED: Removed trailing slash
       const res = await fetch('http://127.0.0.1:8000/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +55,7 @@ const FloodAlertPanel = () => {
     <div className="card animate-fadeInUp max-w-2xl mx-auto mt-6">
       <div className="card-header">
         <h3 className="card-title flex items-center gap-2">
-          <Activity className="icon text-blue-500" /> Kedarnath Flood AI
+          <Activity className="icon text-blue-500" /> AI Prediction Core
         </h3>
         <p className="card-description">Hybrid Ensemble Model (XGB + SVM + GRU)</p>
       </div>
@@ -90,7 +95,7 @@ const FloodAlertPanel = () => {
           disabled={loading}
           className="btn btn-primary w-full py-3 flex justify-center items-center gap-2 font-bold"
         >
-          {loading ? "Analyzing..." : "Check Flood Risk"}
+          {loading ? "Analyzing 23 Features..." : "Run Risk Analysis"}
         </button>
 
         {result && (
@@ -104,121 +109,12 @@ const FloodAlertPanel = () => {
                 <p className="text-sm text-gray-600 mt-1">
                   AI Confidence: <strong>{result.flood_probability}%</strong>
                 </p>
+                
+                {/* Advanced Details */}
                 <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 grid grid-cols-2 gap-x-6 gap-y-1">
                   <span>XGBoost Vote: <b className={result.model_details.xgboost_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.xgboost_risk ? 'DANGER' : 'SAFE'}</b></span>
                   <span>SVM Vote: <b className={result.model_details.svm_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.svm_risk ? 'DANGER' : 'SAFE'}</b></span>
                   <span className="col-span-2 mt-1">GRU Forecast: {result.model_details.gru_forecast.toFixed(2)} sq km</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- DELHI WATER-LOGGING COMPONENT (NEW FEATURE) ---
-const DelhiPanel = () => {
-  const [drainage, setDrainage] = useState('');
-  const [elevation, setElevation] = useState('');
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleAnalysis = async () => {
-    setLoading(true);
-    setResult(null);
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/predict_delhi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            drainage_capacity: drainage || 50, 
-            elevation: elevation || 210 
-        }),
-      });
-      const data = await res.json();
-      if (data.status === 'success') setResult(data);
-      else alert("Error: " + data.message);
-    } catch (e) {
-      alert("Failed to connect to backend.");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="card animate-fadeInUp max-w-2xl mx-auto mt-6">
-      <div className="card-header bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
-        <h3 className="card-title flex items-center gap-2 text-orange-800">
-          <CloudRain className="icon" /> Delhi NCR Water-Logging Monitor
-        </h3>
-        <p className="text-sm text-orange-700">Real-time Weather API + Urban Infrastructure Analysis</p>
-      </div>
-      
-      <div className="card-content p-6">
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          <div className="form-group">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Drainage Capacity (%)</label>
-            <div className="flex items-center border rounded-lg bg-white px-3 py-2">
-                <Activity className="text-gray-400 mr-2" size={18} />
-                <input 
-                  type="number" 
-                  className="w-full outline-none bg-transparent"
-                  placeholder="e.g. 45"
-                  value={drainage}
-                  onChange={(e) => setDrainage(e.target.value)}
-                />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">0% (Clogged) - 100% (Clear)</p>
-          </div>
-          <div className="form-group">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Ward Elevation (m)</label>
-            <div className="flex items-center border rounded-lg bg-white px-3 py-2">
-                <MapPin className="text-gray-400 mr-2" size={18} />
-                <input 
-                  type="number" 
-                  className="w-full outline-none bg-transparent"
-                  placeholder="e.g. 210"
-                  value={elevation}
-                  onChange={(e) => setElevation(e.target.value)}
-                />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Avg Delhi Elevation: ~216m</p>
-          </div>
-        </div>
-
-        <button 
-          onClick={handleAnalysis} 
-          disabled={loading}
-          className="btn w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg shadow-md transition-all flex justify-center items-center gap-2"
-        >
-          {loading ? "Fetching Live Data..." : "Analyze Current Risk"}
-        </button>
-
-        {result && (
-          <div className={`mt-6 p-5 rounded-lg border-l-8 shadow-sm ${
-              result.water_logging_risk === 'CRITICAL' ? 'bg-red-50 border-red-600' : 
-              result.water_logging_risk === 'HIGH' ? 'bg-orange-50 border-orange-500' :
-              'bg-green-50 border-green-500'
-          }`}>
-            <div className="flex items-start gap-4">
-              {result.water_logging_risk === 'LOW' ? 
-                <CheckCircle className="text-green-600 h-10 w-10" /> : 
-                <AlertTriangle className={`${result.water_logging_risk === 'CRITICAL' ? 'text-red-600' : 'text-orange-600'} h-10 w-10`} />
-              }
-              <div>
-                <h4 className={`text-2xl font-bold ${
-                    result.water_logging_risk === 'CRITICAL' ? 'text-red-800' : 
-                    result.water_logging_risk === 'HIGH' ? 'text-orange-800' : 'text-green-800'
-                }`}>
-                  {result.water_logging_risk} RISK
-                </h4>
-                <p className="text-gray-700 font-medium mt-1">
-                  Risk Score: {result.risk_score}/100
-                </p>
-                <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-1 text-sm text-gray-600 border-t border-gray-200 pt-3">
-                  <span>Current Weather: <b className="text-gray-900">{result.details.weather}</b></span>
-                  <span>Rain (Last 1h): <b className="text-blue-600">{result.details.live_rain_1h} mm</b></span>
                 </div>
               </div>
             </div>
@@ -351,15 +247,14 @@ export default function FloodManagementApp() {
           <p>Real-time monitoring and emergency response dashboard</p>
         </div>
 
-        {/* --- NAVIGATION TABS --- */}
         <div className="tabs-list">
             <button className={`tab-trigger ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}><MapPin /> Dashboard</button>
             <button className={`tab-trigger ${activeTab === 'water-levels' ? 'active' : ''}`} onClick={() => setActiveTab('water-levels')}><Activity /> Water Levels</button>
             
-            {/* AI PREDICTION BUTTON (Kedarnath) */}
+            {/* AI PREDICTION BUTTON */}
             <button className={`tab-trigger ${activeTab === 'prediction' ? 'active' : ''}`} onClick={() => setActiveTab('prediction')}><Shield /> AI Prediction</button>
             
-            {/* DELHI MODE BUTTON (New!) */}
+            {/* DELHI MODE BUTTON */}
             <button className={`tab-trigger ${activeTab === 'delhi' ? 'active' : ''}`} onClick={() => setActiveTab('delhi')}><CloudRain /> Delhi Mode</button>
             
             <button className={`tab-trigger ${activeTab === 'alerts' ? 'active' : ''}`} onClick={() => setActiveTab('alerts')}><AlertTriangle /> Alerts</button>
@@ -394,24 +289,25 @@ export default function FloodManagementApp() {
             </div>
           )}
           
-          {/* --- KEDARNATH AI PREDICTION TAB --- */}
+          {/* --- AI PREDICTION TAB CONTENT --- */}
           {activeTab === 'prediction' && (
             <div className="animate-fadeInUp">
                <div className="tab-header text-center mb-6">
                   <h2>Live Flood Prediction</h2>
-                  <p className="text-gray-500">Kedarnath Region Analysis</p>
+                  <p className="text-gray-500">Real-time analysis using Hybrid Deep Learning Models</p>
                </div>
                <FloodAlertPanel />
             </div>
           )}
 
-          {/* --- DELHI MODE TAB --- */}
+          {/* --- DELHI MODE TAB CONTENT --- */}
           {activeTab === 'delhi' && (
             <div className="animate-fadeInUp">
                 <div className="tab-header text-center mb-6">
                     <h2>Urban Water-Logging Monitor</h2>
                     <p className="text-gray-500">Real-time Analysis for Delhi NCR</p>
                 </div>
+                {/* Ensure you have DelhiPanel.jsx in your components folder */}
                 <DelhiPanel />
             </div>
           )}
