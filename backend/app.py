@@ -1,14 +1,27 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os, requests
+import os
+import requests
 import numpy as np
 import pandas as pd
 import joblib
 import tensorflow as tf
+from dotenv import load_dotenv  # Import dotenv
+
+# =====================================================
+# 0. CONFIGURATION & SETUP
+# =====================================================
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 CORS(app)
+
+# Securely get API Key
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
+if not OPENWEATHER_API_KEY:
+    print("⚠️ WARNING: OPENWEATHER_API_KEY not found in .env file.")
 
 # =====================================================
 # 1. LOAD KEDARNATH MODELS
@@ -16,15 +29,74 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "ml_models")
 
-scaler_dl = joblib.load(os.path.join(MODEL_DIR, "scaler_dl.pkl"))
-scaler_hybrid = joblib.load(os.path.join(MODEL_DIR, "scaler_hybrid.pkl"))
-gru_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "gru_standalone_model.h5"), compile=False)
-tcn_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "tcn_standalone_model.h5"), compile=False)
-xgb_model = joblib.load(os.path.join(MODEL_DIR, "xgb_hybrid_model.pkl"))
-svm_model = joblib.load(os.path.join(MODEL_DIR, "svm_hybrid_model.pkl"))
+# Load Scalers and Models for Kedarnath
+try:
+    scaler_dl = joblib.load(os.path.join(MODEL_DIR, "scaler_dl.pkl"))
+    scaler_hybrid = joblib.load(os.path.join(MODEL_DIR, "scaler_hybrid.pkl"))
+    gru_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "gru_standalone_model.h5"), compile=False)
+    tcn_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "tcn_standalone_model.h5"), compile=False)
+    xgb_model = joblib.load(os.path.join(MODEL_DIR, "xgb_hybrid_model.pkl"))
+    svm_model = joblib.load(os.path.join(MODEL_DIR, "svm_hybrid_model.pkl"))
+    print("✅ Kedarnath Models Loaded Successfully")
+except Exception as e:
+    print(f"⚠️ Warning: Could not load some Kedarnath models. Error: {e}")
 
 # =====================================================
-# 2. KEDARNATH PREDICTION
+# 2. STATIC DATA: DELHI ZONES (VULNERABILITY MAP)
+# =====================================================
+DELHI_ZONES = [
+    {
+        "id": "zone_1",
+        "name": "Minto Bridge (Connaught Place)",
+        "lat": 28.6327,
+        "lon": 77.2197,
+        "elevation_meters": 208,     # Critical low point
+        "drainage_quality": "POOR"
+    },
+    {
+        "id": "zone_2",
+        "name": "ITO Junction",
+        "lat": 28.6289,
+        "lon": 77.2413,
+        "elevation_meters": 210,
+        "drainage_quality": "MODERATE"
+    },
+    {
+        "id": "zone_3",
+        "name": "Okhla Underpass",
+        "lat": 28.5367,
+        "lon": 77.2714,
+        "elevation_meters": 212,
+        "drainage_quality": "POOR"
+    },
+    {
+        "id": "zone_4",
+        "name": "Civil Lines",
+        "lat": 28.6816,
+        "lon": 77.2281,
+        "elevation_meters": 218,     # Higher ground
+        "drainage_quality": "GOOD"
+    },
+    {
+        "id": "zone_5",
+        "name": "Dwarka Sector 12",
+        "lat": 28.5921,
+        "lon": 77.0390,
+        "elevation_meters": 215,
+        "drainage_quality": "MODERATE"
+    },
+    {
+        "id": "zone_6",
+        "name": "Sangam Vihar",
+        "lat": 28.5028,
+        "lon": 77.2435,
+        "elevation_meters": 213,
+        "drainage_quality": "POOR"   # Unplanned colony factor
+    }
+]
+
+# =====================================================
+# 3. ENDPOINT: KEDARNATH FLOOD PREDICTION
 # =====================================================
 @app.route("/api/predict", methods=["POST"])
 def predict_kedarnath():
@@ -33,13 +105,16 @@ def predict_kedarnath():
         river = float(data.get("river_level", 1.0))
         rain = float(data.get("rainfall", 5.0))
 
+        # Create a dummy sequence for DL models (simulating history)
         history = [[river * (1 - 0.02 * i), rain] for i in range(6)]
         seq = np.array([history])
 
+        # Deep Learning Predictions
         scaled = scaler_dl.transform(seq.reshape(6, 2)).reshape(1, 6, 2)
         gru_forecast = float(gru_model.predict(scaled, verbose=0)[0][0])
         tcn_forecast = float(tcn_model.predict(scaled, verbose=0)[0][0])
 
+        # Prepare Features for Hybrid Models
         df = pd.DataFrame([{
             "river_water_area_sqkm": river,
             "rainfall_mm": rain,
@@ -66,6 +141,7 @@ def predict_kedarnath():
             "TCN_Forecast": tcn_forecast
         }])
 
+        # Hybrid Predictions
         xgb_pred = int(xgb_model.predict(df)[0])
         svm_pred = int(svm_model.predict(scaler_hybrid.transform(df))[0])
 
@@ -73,8 +149,9 @@ def predict_kedarnath():
 
         return jsonify({
             "status": "success",
+            "location": "Kedarnath",
             "alert_level": risk,
-            "flood_probability": 72.3,
+            "flood_probability": 72.3, 
             "model_details": {
                 "xgboost_risk": xgb_pred,
                 "svm_risk": svm_pred,
@@ -86,74 +163,104 @@ def predict_kedarnath():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =====================================================
-# 3. DELHI WATER‑LOGGING (LIVE WEATHER)
+# 4. ENDPOINT: DELHI WATER-LOGGING (ZONE BASED)
 # =====================================================
-@app.route("/api/predict_delhi", methods=["POST"])
-def predict_delhi_waterlogging():
+@app.route("/api/predict_delhi", methods=["GET", "POST"])
+def predict_delhi_zones():
+    """
+    Fetches live weather for Delhi and calculates risk for multiple zones
+    based on their static administrative attributes (elevation, drainage).
+    """
     try:
-        data = request.json or {}
+        if not OPENWEATHER_API_KEY:
+            return jsonify({"status": "error", "message": "Server API Key missing"}), 500
 
-        drainage = float(data.get("drainage_capacity", 50))
-        elevation = float(data.get("elevation", 210))
-
-        API_KEY = "3763b01ad8620621fd5a75814252f105"
-        LAT, LON = "28.6139", "77.2090"
-
-        url = f"https://api.openweathermap.org/data/2.5/weather?lat={LAT}&lon={LON}&appid={API_KEY}&units=metric"
-        w_data = requests.get(url, timeout=5).json()
-
-        # ✅ REAL‑TIME WEATHER
+        # 1. Fetch City-Wide Weather
+        base_lat, base_lon = "28.6139", "77.2090" 
+        
+        # Using the secure API Key variable
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={base_lat}&lon={base_lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+        response = requests.get(url, timeout=5)
+        
+        if response.status_code != 200:
+            return jsonify({"status": "error", "message": "Weather API Provider Error"}), 502
+            
+        w_data = response.json()
+        
+        # Live Weather Data
         rain_1h = w_data.get("rain", {}).get("1h", 0.0)
-        temperature = w_data.get("main", {}).get("temp")
+        weather_desc = w_data.get("weather", [{}])[0].get("description", "Clear")
+        temp = w_data.get("main", {}).get("temp")
         humidity = w_data.get("main", {}).get("humidity")
-        weather_desc = w_data.get("weather", [{}])[0].get("description", "Unknown")
 
-        # ---------- RISK LOGIC ----------
-        risk_score = 0
-        if rain_1h > 15:
-            risk_score += 50
-        elif rain_1h > 5:
-            risk_score += 30
+        results = []
 
-        if drainage < 30:
-            risk_score += 40
-        elif drainage < 60:
-            risk_score += 20
+        # 2. Iterate Zones and Calculate Risk
+        for zone in DELHI_ZONES:
+            risk_score = 0
+            
+            # --- FACTOR A: DYNAMIC (Live Weather) ---
+            if rain_1h > 15:
+                risk_score += 50
+            elif rain_1h > 5:
+                risk_score += 30
+            elif rain_1h > 0.5:
+                risk_score += 10
+            
+            # --- FACTOR B: STATIC (Infrastructure) ---
+            # Elevation Penalty
+            if zone["elevation_meters"] < 210:
+                risk_score += 30
+            elif zone["elevation_meters"] < 215:
+                risk_score += 15
+                
+            # Drainage Penalty
+            if zone["drainage_quality"] == "POOR":
+                risk_score += 30
+            elif zone["drainage_quality"] == "MODERATE":
+                risk_score += 10
+            
+            # --- DETERMINE STATUS ---
+            status = "LOW"
+            if risk_score >= 70:
+                status = "CRITICAL"
+            elif risk_score >= 40:
+                status = "HIGH"
+            elif risk_score >= 20:
+                status = "MODERATE"
 
-        if elevation < 205:
-            risk_score += 10
-
-        status = "LOW"
-        if risk_score > 60:
-            status = "CRITICAL"
-        elif risk_score > 30:
-            status = "HIGH"
+            results.append({
+                "zone_name": zone["name"],
+                "latitude": zone["lat"],
+                "longitude": zone["lon"],
+                "risk_status": status,
+                "risk_score": risk_score,
+                "details": {
+                    "elevation": zone["elevation_meters"],
+                    "drainage": zone["drainage_quality"]
+                }
+            })
 
         return jsonify({
             "status": "success",
-            "water_logging_risk": status,
-            "risk_score": risk_score,
-
-            # ✅ BACKWARD‑COMPATIBLE (your frontend already uses this)
-            "details": {
-                "live_rain_1h": rain_1h,
-                "weather": weather_desc
-            },
-
-            # ✅ EXTENDED REAL‑TIME DATA
-            "live_weather": {
-                "temperature": temperature,
-                "humidity": humidity,
+            "city_weather": {
+                "description": weather_desc,
                 "rain_1h": rain_1h,
-                "weather_description": weather_desc
-            }
+                "temperature": temp,
+                "humidity": humidity
+            },
+            "zones_data": results
         })
 
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "status": "error", 
+            "message": str(e),
+            "note": "Internal Server Error"
+        }), 500
 
 # =====================================================
-# 4. ROOT + HEALTH (THIS FIXES 500)
+# 5. UTILITY ROUTES
 # =====================================================
 @app.route("/")
 def home():
@@ -161,8 +268,8 @@ def home():
         "status": "running",
         "message": "SatarkMitra AI Backend is Active",
         "endpoints": {
-            "kedarnath": "/api/predict (POST)",
-            "delhi": "/api/predict_delhi (POST)"
+            "kedarnath_prediction": "/api/predict (POST)",
+            "delhi_hotspots": "/api/predict_delhi (GET/POST)"
         }
     })
 
