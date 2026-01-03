@@ -20,7 +20,7 @@ export default function DelhiPanel() {
   const [cityWeather, setCityWeather] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // 🔥 USP FEATURE: Rainfall Simulation
+  // 🔥 USP: Rainfall Simulation Slider
   const [simulatedRain, setSimulatedRain] = useState(0)
 
   const fetchDelhiHotspots = async () => {
@@ -33,8 +33,6 @@ export default function DelhiPanel() {
       if (data.status === "success") {
         setZones(data.zones_data || [])
         setCityWeather(data.city_weather || null)
-      } else {
-        alert(data.message)
       }
     } catch {
       alert("Backend not reachable")
@@ -46,7 +44,7 @@ export default function DelhiPanel() {
     fetchDelhiHotspots()
   }, [])
 
-  // 🔹 FRONTEND RISK SIMULATION LOGIC
+  // 🔮 Apply rainfall simulation on frontend
   const applyRainSimulation = (zone) => {
     let score = zone.risk_score
 
@@ -85,13 +83,13 @@ export default function DelhiPanel() {
       </h3>
 
       <p className="text-sm text-gray-600 mb-4">
-        Zone‑wise flood risk + what‑if rainfall simulation
+        Zone‑wise risk assessment with rainfall scenario simulation
       </p>
 
-      {/* 🌧️ WHAT‑IF SLIDER (USP) */}
+      {/* 🌧️ WHAT‑IF RAINFALL SLIDER (USP) */}
       <div className="mb-4 p-4 rounded border bg-blue-50">
         <p className="font-semibold mb-2">
-          🌧️ Simulate Rainfall Scenario: <b>{simulatedRain} mm/hr</b>
+          🌧️ Simulate Rainfall: <b>{simulatedRain} mm/hr</b>
         </p>
         <input
           type="range"
@@ -102,11 +100,11 @@ export default function DelhiPanel() {
           className="w-full"
         />
         <p className="text-xs text-gray-600 mt-1">
-          Slide to see how risks escalate during heavier rainfall
+          See how hotspot risks escalate during heavy rainfall
         </p>
       </div>
 
-      {/* 🔹 MAP + LEGEND */}
+      {/* 🗺️ MAP + LEGEND */}
       <div className="relative mb-6">
         <DelhiHotspotMap zones={simulatedZones} />
 
@@ -115,7 +113,7 @@ export default function DelhiPanel() {
         </div>
       </div>
 
-      {/* 🔹 REFRESH */}
+      {/* 🔄 REFRESH */}
       <button
         onClick={fetchDelhiHotspots}
         disabled={loading}
@@ -124,7 +122,7 @@ export default function DelhiPanel() {
         {loading ? "Updating..." : "Refresh Live Data"}
       </button>
 
-      {/* 🔹 ZONE CARDS */}
+      {/* 📍 ZONE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {simulatedZones.map((zone, index) => (
           <div
@@ -150,12 +148,6 @@ export default function DelhiPanel() {
           </div>
         ))}
       </div>
-
-      {zones.length === 0 && !loading && (
-        <p className="text-center text-gray-500 mt-4">
-          No hotspot data available.
-        </p>
-      )}
     </div>
   )
 }

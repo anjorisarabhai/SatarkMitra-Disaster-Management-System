@@ -17,19 +17,13 @@ L.Icon.Default.mergeOptions({
 
 // 🎨 Risk → Marker Color
 const getMarkerColor = (risk) => {
-  switch (risk) {
-    case "CRITICAL":
-      return "red"
-    case "HIGH":
-      return "orange"
-    case "MODERATE":
-      return "gold"
-    default:
-      return "green"
-  }
+  if (risk === "CRITICAL") return "red"
+  if (risk === "HIGH") return "orange"
+  if (risk === "MODERATE") return "gold"
+  return "green"
 }
 
-// 🧭 Create colored marker icon
+// 🧭 Create colored marker
 const createIcon = (color) =>
   new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
@@ -41,12 +35,7 @@ const createIcon = (color) =>
     shadowSize: [41, 41],
   })
 
-/**
- * Props:
- * zones → array of hotspot objects from backend
- * simulatedRain (optional) → for future rainfall slider (OPTION A)
- */
-export default function DelhiHotspotMap({ zones = [], simulatedRain = null }) {
+export default function DelhiHotspotMap({ zones = [] }) {
   return (
     <MapContainer
       center={[28.6139, 77.2090]}
@@ -60,8 +49,8 @@ export default function DelhiHotspotMap({ zones = [], simulatedRain = null }) {
       />
 
       {zones.map((zone, idx) => {
-        const risk = zone?.risk_status ?? "LOW"
-        const details = zone?.details ?? {}
+        const risk = zone.risk_status || "LOW"
+        const details = zone.details || {}
 
         return (
           <Marker
@@ -69,28 +58,22 @@ export default function DelhiHotspotMap({ zones = [], simulatedRain = null }) {
             position={[zone.latitude, zone.longitude]}
             icon={createIcon(getMarkerColor(risk))}
           >
-            {/* 🟡 HOVER INFO */}
+            {/* 🟡 Hover Info */}
             <Tooltip direction="top" offset={[0, -20]} opacity={1}>
               <div className="text-xs leading-tight">
-                <b>{zone.zone_name}</b>
-                <br />
-                Risk: {risk}
-                <br />
-                Elevation: {details.elevation ?? "N/A"} m
+                <b>{zone.zone_name}</b><br />
+                Risk: {risk}<br />
+                Elevation: {details.elevation} m
               </div>
             </Tooltip>
 
-            {/* 🔵 CLICK DETAILS */}
+            {/* 🔵 Click Info */}
             <Popup>
-              <b>{zone.zone_name}</b>
-              <br />
-              <b>Risk:</b> {risk}
-              <br />
-              <b>Score:</b> {zone.risk_score}
-              <br />
-              <b>Elevation:</b> {details.elevation ?? "N/A"} m
-              <br />
-              <b>Drainage:</b> {details.drainage ?? "Unknown"}
+              <b>{zone.zone_name}</b><br />
+              <b>Risk:</b> {risk}<br />
+              <b>Score:</b> {zone.risk_score}<br />
+              <b>Elevation:</b> {details.elevation} m<br />
+              <b>Drainage:</b> {details.drainage}
             </Popup>
           </Marker>
         )
