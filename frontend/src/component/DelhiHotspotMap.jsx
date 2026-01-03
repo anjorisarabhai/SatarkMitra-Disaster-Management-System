@@ -1,48 +1,48 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet"
-import L from "leaflet"
-import wardData from "../data/delhi_wards.geojson"
+import { useEffect, useState } from "react"
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet"
+import "leaflet/dist/leaflet.css"
 
-// Fix default marker icons
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-})
-
-/* ---------- POLYGON STYLING ---------- */
-const getWardStyle = (feature) => {
-  const risk = feature.properties.risk_status
-
-  let color = "green"
-  if (risk === "CRITICAL") color = "red"
-  else if (risk === "HIGH") color = "orange"
-  else if (risk === "MODERATE") color = "gold"
-
-  return {
-    fillColor: color,
-    weight: 2,
-    opacity: 1,
-    color: "#333",
-    fillOpacity: 0.5
-  }
-}
-
-/* ---------- TOOLTIP ---------- */
-const onEachWard = (feature, layer) => {
-  layer.bindTooltip(
-    `
-    <b>${feature.properties.name}</b><br/>
-    Risk: ${feature.properties.risk_status}<br/>
-    Score: ${feature.properties.risk_score}
-    `,
-    { sticky: true }
-  )
+// Risk → color mapping
+const getWardColor = (risk) => {
+  if (risk === "CRITICAL") return "#dc2626"   // red
+  if (risk === "HIGH") return "#f97316"       // orange
+  if (risk === "MODERATE") return "#facc15"   // yellow
+  return "#22c55e"                            // green
 }
 
 export default function DelhiHotspotMap({ zones }) {
+  const [wardsGeoJSON, setWardsGeoJSON] = useState(null)
+
+  // 🔹 Load GeoJSON from public folder
+  useEffect(() => {
+    fetch("/data/delhi_wards.geojson")
+      .then((res) => res.json())
+      .then((data) => setWardsGeoJSON(data))
+      .catch((err) => console.error("Failed to load GeoJSON", err))
+  }, [])
+
+  // 🔹 Attach hover tooltip to each ward
+  const onEachWard = (feature, layer) => {
+    const wardName = feature.properties?.ward_name || "Unknown Ward"
+
+    // Match backend zone risk (basic name match for prototype)
+    const matchedZone = zones.find(z =>
+      wardName.toLowerCase().includes(z.zone_name.toLowerCase().split(" ")[0])
+    )
+
+    const risk = matchedZone?.risk_status || "LOW"
+
+    layer.bindTooltip(
+      `
+      <strong>${wardName}</strong><br/>
+      Risk: ${risk}
+      `,
+      { sticky: true }
+    )
+  }
+
   return (
     <MapContainer
       center={[28.6139, 77.2090]}
@@ -55,23 +55,27 @@ export default function DelhiHotspotMap({ zones }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* 🔹 WARD POLYGONS */}
-      <GeoJSON
-        data={wardData}
-        style={getWardStyle}
-        onEachFeature={onEachWard}
-      />
+      {wardsGeoJSON && (
+        <GeoJSON
+          data={wardsGeoJSON}
+          style={(feature) => {
+            const wardName = feature.properties?.ward_name || ""
+            const matchedZone = zones.find(z =>
+              wardName.toLowerCase().includes(z.zone_name.toLowerCase().split(" ")[0])
+            )
 
-      {/* 🔹 EXISTING HOTSPOT MARKERS (UNCHANGED) */}
-      {zones.map((zone, idx) => (
-        <Marker key={idx} position={[zone.latitude, zone.longitude]}>
-          <Popup>
-            <b>{zone.zone_name}</b><br />
-            Risk: {zone.risk_status}<br />
-            Score: {zone.risk_score}
-          </Popup>
-        </Marker>
-      ))}
+            const risk = matchedZone?.risk_status || "LOW"
+
+            return {
+              fillColor: getWardColor(risk),
+              weight: 1,
+              color: "#1f2937",
+              fillOpacity: 0.6,
+            }
+          }}
+          onEachFeature={onEachWard}
+        />
+      )}
     </MapContainer>
   )
 }
