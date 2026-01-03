@@ -7,6 +7,14 @@ import {
   Check,
   MapPin
 } from "lucide-react"
+import dynamic from "next/dynamic"
+
+const DelhiHotspotMap = dynamic(
+  () => import("./DelhiHotspotMap"),
+  { ssr: false }
+)
+
+
 
 export default function DelhiPanel() {
   const [zones, setZones] = useState([])
@@ -78,6 +86,18 @@ export default function DelhiPanel() {
           </p>
         </div>
       )}
+
+      {/* 🔹 GIS HOTSPOT MAP */}
+      {zones.length > 0 && (
+        <div className="my-6">
+          <h4 className="font-semibold mb-2">
+            🗺️ Delhi Water‑Logging Hotspot Map
+          </h4>
+          <DelhiHotspotMap zones={zones} />
+        </div>
+      )}
+
+
 
       {/* 🔹 REFRESH BUTTON */}
       <button
