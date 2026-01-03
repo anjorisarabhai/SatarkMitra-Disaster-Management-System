@@ -1,9 +1,10 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
+import "leaflet/dist/leaflet.css"
 
-// Fix default marker issue in Next.js
+// 🔧 Fix default marker issue in Next.js
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -14,7 +15,7 @@ L.Icon.Default.mergeOptions({
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
 
-// Risk‑based marker colors
+// 🎨 Risk‑based marker colors
 const getMarkerColor = (risk) => {
   if (risk === "CRITICAL") return "red"
   if (risk === "HIGH") return "orange"
@@ -52,6 +53,16 @@ export default function DelhiHotspotMap({ zones }) {
           position={[zone.latitude, zone.longitude]}
           icon={createIcon(getMarkerColor(zone.risk_status))}
         >
+          {/* 🟡 HOVER TOOLTIP */}
+          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+            <div className="text-xs">
+              <b>{zone.zone_name}</b><br />
+              Risk: {zone.risk_status}<br />
+              Elevation: {zone.details.elevation} m
+            </div>
+          </Tooltip>
+
+          {/* 🔵 CLICK POPUP */}
           <Popup>
             <b>{zone.zone_name}</b><br />
             Risk: {zone.risk_status}<br />
