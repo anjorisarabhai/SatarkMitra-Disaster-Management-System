@@ -8,44 +8,35 @@ import numpy as np
 import pandas as pd
 import joblib
 import tensorflow as tf
+import requests  # <--- NEW IMPORT for Weather API
 
 app = Flask(__name__)
-CORS(app) # Allows your Next.js frontend to talk to this backend
+CORS(app) 
 
 # ==========================================
-# 1. LOAD AI MODELS (The "Brain")
+# 1. LOAD KEDARNATH AI MODELS
 # ==========================================
 print("⏳ Loading SatarkMitra AI Models...")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, 'ml_models')
 
 try:
-    # Load Scalers
     scaler_dl = joblib.load(os.path.join(MODEL_DIR, 'scaler_dl.pkl'))
     scaler_hybrid = joblib.load(os.path.join(MODEL_DIR, 'scaler_hybrid.pkl'))
-    
-    # Load Deep Learning Models (Forecast)
-    # compile=False prevents errors with custom losses
     gru_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, 'gru_standalone_model.h5'), compile=False)
     tcn_model = tf.keras.models.load_model(os.path.join(MODEL_DIR, 'tcn_standalone_model.h5'), compile=False)
-    
-    # Load Classical Classifiers (Decision)
     xgb_model = joblib.load(os.path.join(MODEL_DIR, 'xgb_hybrid_model.pkl'))
     svm_model = joblib.load(os.path.join(MODEL_DIR, 'svm_hybrid_model.pkl'))
-    
     print("✅ All Models Loaded Successfully!")
 except Exception as e:
     print(f"❌ Error loading models: {e}")
-    print("Make sure you created the 'ml_models' folder and copied the 6 files there!")
 
 # ==========================================
-# 2. EXISTING DATA STRUCTURES
+# 2. DATA STRUCTURES
 # ==========================================
-# Temporary in-memory storage (replace with PostgreSQL/PostGIS later)
 weather_data_store = []
 alerts_store = []
 
-# --- Pydantic models for validation ---
 class WeatherData(BaseModel):
     station_id: str
     temperature: float
@@ -60,33 +51,30 @@ class AlertData(BaseModel):
     timestamp: datetime
 
 # ==========================================
-# 3. AI PREDICTION ENDPOINT (The Feature 1)
+# 3. KEDARNATH PREDICTION (ML Model)
 # ==========================================
 @app.route("/api/predict", methods=["POST"])
 def predict_flood_risk():
     try:
-        # 1. Get Data from Frontend/Sensor
         data = request.json
         curr_river = float(data.get('river_level'))
         curr_rain = float(data.get('rainfall'))
 
-        # 2. Simulate History (Creating the Time-Series)
-        # We simulate a 6-day trend ending at the current value
+        # Simulate 6-day history
         history_sim = []
         for i in range(6):
             factor = 1.0 - (0.02 * (5 - i)) 
             history_sim.append([curr_river * factor, curr_rain])
         input_seq = np.array([history_sim]) 
 
-        # 3. Deep Learning Forecasts
+        # Forecasts
         seq_scaled = scaler_dl.transform(input_seq.reshape(6, 2)).reshape(1, 6, 2)
         gru_forecast = gru_model.predict(seq_scaled, verbose=0)[0][0]
         tcn_forecast = tcn_model.predict(seq_scaled, verbose=0)[0][0]
 
-        # 4. Feature Engineering (23 Features)
+        # Features
         rivers = input_seq[0, :, 0]
         rains = input_seq[0, :, 1]
-        
         features = {
             'river_water_area_sqkm': curr_river, 'rainfall_mm': curr_rain,
             'river_rolling_mean_3': np.mean(rivers[-3:]), 'river_rolling_std_3': np.std(rivers[-3:]),
@@ -102,7 +90,6 @@ def predict_flood_risk():
             'GRU_Forecast': gru_forecast, 'TCN_Forecast': tcn_forecast
         }
         
-        # Enforce column order for XGBoost
         cols = ['river_water_area_sqkm', 'rainfall_mm', 'river_rolling_mean_3', 'river_rolling_std_3', 
                 'rainfall_rolling_sum_3', 'rainfall_rolling_mean_3', 'river_lag_1', 'river_lag_2', 
                 'rainfall_lag_1', 'rainfall_lag_2', 'river_change', 'rainfall_change', 
@@ -113,12 +100,10 @@ def predict_flood_risk():
         
         df_input = pd.DataFrame([features])[cols]
 
-        # 5. Ensemble Prediction
         xgb_pred = xgb_model.predict(df_input)[0]
         input_scaled = scaler_hybrid.transform(df_input)
         svm_pred = svm_model.predict(input_scaled)[0]
 
-        # 6. Consensus Logic
         final_risk = 1 if (xgb_pred == 1 or svm_pred == 1) else 0
         final_prob = float((xgb_model.predict_proba(df_input)[0][1] * 0.6) + (svm_model.predict_proba(input_scaled)[0][1] * 0.4))
 
@@ -132,12 +117,70 @@ def predict_flood_risk():
                 'gru_forecast': float(gru_forecast)
             }
         })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# ==========================================
+# 4. DELHI WATER-LOGGING PREDICTION (Live API)
+# ==========================================
+@app.route("/api/predict_delhi", methods=["POST"])
+def predict_delhi_waterlogging():
+    try:
+        data = request.json
+        
+        # 1. User Inputs
+        drainage = float(data.get('drainage_capacity', 50))
+        elevation = float(data.get('elevation', 210))
+        
+        # 2. Fetch Live Weather
+        API_KEY = "3763b01ad8620621fd5a75814252f105"
+        LAT, LON = "28.6139", "77.2090" # Delhi Coordinates
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={LAT}&lon={LON}&appid={API_KEY}&units=metric"
+        
+        rain_1h = 0.0
+        weather_desc = "Clear"
+        
+        try:
+            r = requests.get(url, timeout=5)
+            if r.status_code == 200:
+                w_data = r.json()
+                weather_desc = w_data['weather'][0]['description']
+                if 'rain' in w_data:
+                    rain_1h = w_data['rain'].get('1h', 0.0)
+                    if rain_1h == 0:
+                        rain_1h = w_data['rain'].get('3h', 0.0) / 3.0
+        except Exception as e:
+            print(f"Weather API Error: {e}")
+
+        # 3. Calculate Risk Logic
+        risk_score = 0
+        if rain_1h > 15: risk_score += 50
+        elif rain_1h > 5: risk_score += 30
+        
+        if drainage < 30: risk_score += 40
+        elif drainage < 60: risk_score += 20
+        
+        if elevation < 205: risk_score += 10
+        
+        status = "LOW"
+        if risk_score > 60: status = "CRITICAL"
+        elif risk_score > 30: status = "HIGH"
+
+        return jsonify({
+            'status': 'success',
+            'water_logging_risk': status,
+            'risk_score': risk_score,
+            'details': {
+                'live_rain_1h': rain_1h,
+                'weather': weather_desc
+            }
+        })
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # ==========================================
-# 4. EXISTING ENDPOINTS (Weather & Alerts)
+# 5. OTHER ENDPOINTS
 # ==========================================
 @app.route("/api/weather", methods=["POST"])
 def receive_weather():
@@ -175,10 +218,10 @@ def home():
         "status": "running",
         "message": "SatarkMitra AI Backend is Active",
         "endpoints": {
-            "predict": "/api/predict (POST)",
-            "health": "/health (GET)"
+            "predict_kedarnath": "/api/predict (POST)",
+            "predict_delhi": "/api/predict_delhi (POST)"
         }
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000) # Running on port 8000
+    app.run(debug=True, port=8000)
