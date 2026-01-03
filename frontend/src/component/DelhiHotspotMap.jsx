@@ -1,53 +1,45 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
+import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// Risk → color mapping
-const getWardColor = (risk) => {
-  if (risk === "CRITICAL") return "#dc2626"   // red
-  if (risk === "HIGH") return "#f97316"       // orange
-  if (risk === "MODERATE") return "#facc15"   // yellow
-  return "#22c55e"                            // green
+// 🔧 Fix default marker issue in Next.js
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+})
+
+// 🎨 Risk‑based marker colors
+const getMarkerColor = (risk) => {
+  if (risk === "CRITICAL") return "red"
+  if (risk === "HIGH") return "orange"
+  if (risk === "MODERATE") return "gold"
+  return "green"
 }
 
+const createIcon = (color) =>
+  new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+    shadowUrl:
+      "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  })
+
 export default function DelhiHotspotMap({ zones }) {
-  const [wardsGeoJSON, setWardsGeoJSON] = useState(null)
-
-  // 🔹 Load GeoJSON from public folder
-  useEffect(() => {
-    fetch("/data/delhi_wards.geojson")
-      .then((res) => res.json())
-      .then((data) => setWardsGeoJSON(data))
-      .catch((err) => console.error("Failed to load GeoJSON", err))
-  }, [])
-
-  // 🔹 Attach hover tooltip to each ward
-  const onEachWard = (feature, layer) => {
-    const wardName = feature.properties?.ward_name || "Unknown Ward"
-
-    // Match backend zone risk (basic name match for prototype)
-    const matchedZone = zones.find(z =>
-      wardName.toLowerCase().includes(z.zone_name.toLowerCase().split(" ")[0])
-    )
-
-    const risk = matchedZone?.risk_status || "LOW"
-
-    layer.bindTooltip(
-      `
-      <strong>${wardName}</strong><br/>
-      Risk: ${risk}
-      `,
-      { sticky: true }
-    )
-  }
-
   return (
     <MapContainer
       center={[28.6139, 77.2090]}
       zoom={11}
-      style={{ height: "500px", width: "100%" }}
+      style={{ height: "450px", width: "100%" }}
       className="rounded-lg"
     >
       <TileLayer
@@ -55,27 +47,31 @@ export default function DelhiHotspotMap({ zones }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {wardsGeoJSON && (
-        <GeoJSON
-          data={wardsGeoJSON}
-          style={(feature) => {
-            const wardName = feature.properties?.ward_name || ""
-            const matchedZone = zones.find(z =>
-              wardName.toLowerCase().includes(z.zone_name.toLowerCase().split(" ")[0])
-            )
+      {zones.map((zone, idx) => (
+        <Marker
+          key={idx}
+          position={[zone.latitude, zone.longitude]}
+          icon={createIcon(getMarkerColor(zone.risk_status))}
+        >
+          {/* 🟡 HOVER TOOLTIP */}
+          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+            <div className="text-xs">
+              <b>{zone.zone_name}</b><br />
+              Risk: {zone.risk_status}<br />
+              Elevation: {zone.details.elevation} m
+            </div>
+          </Tooltip>
 
-            const risk = matchedZone?.risk_status || "LOW"
-
-            return {
-              fillColor: getWardColor(risk),
-              weight: 1,
-              color: "#1f2937",
-              fillOpacity: 0.6,
-            }
-          }}
-          onEachFeature={onEachWard}
-        />
-      )}
+          {/* 🔵 CLICK POPUP */}
+          <Popup>
+            <b>{zone.zone_name}</b><br />
+            Risk: {zone.risk_status}<br />
+            Score: {zone.risk_score}<br />
+            Elevation: {zone.details.elevation} m<br />
+            Drainage: {zone.details.drainage}
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   )
 }
