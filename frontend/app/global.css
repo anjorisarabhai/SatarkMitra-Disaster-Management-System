@@ -1,64 +1,265 @@
 /*
  * GLOBAL STYLES & THEME VARIABLES
- * This file defines the color palette for light and dark modes.
+ * Modern color palette with enhanced contrast and vibrancy.
+ * Supports both light and dark modes with smooth transitions.
 */
 
 :root {
-  /* Light Theme Variables */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.35 0 0);
-  --card: oklch(0.97 0 0);
-  --card-foreground: oklch(0.35 0 0);
+  /* ========================================
+     LIGHT THEME - Refined and modern
+     ======================================== */
+  
+  /* Base Colors */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.15 0 0);
+  
+  /* Card & Surface Colors */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.35 0 0);
-  --primary: oklch(0.45 0.15 160);
+  --popover-foreground: oklch(0.15 0 0);
+  
+  /* Primary Colors - Vibrant teal/cyan */
+  --primary: oklch(0.5 0.18 180);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.55 0.15 160);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.55 0.15 160);
+  --accent: oklch(0.55 0.18 200);
   --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.55 0.25 15);
+  
+  /* Secondary Colors */
+  --secondary: oklch(0.92 0.01 250);
+  --secondary-foreground: oklch(0.15 0 0);
+  
+  /* Muted Colors */
+  --muted: oklch(0.95 0.01 250);
+  --muted-foreground: oklch(0.45 0.02 250);
+  
+  /* Destructive/Error Colors */
+  --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.97 0 0);
-  --ring: oklch(0.45 0.15 160 / 0.5);
-
-  /* Chart Colors (Light) */
-  --chart-1: oklch(0.45 0.15 160);
-  --chart-2: oklch(0.55 0.15 160);
-  --chart-3: oklch(0.6 0.2 220);
-  --chart-4: oklch(0.55 0.25 15);
-  --chart-5: oklch(0.7 0.15 60);
+  
+  /* Border & Input Colors */
+  --border: oklch(0.88 0.01 250);
+  --input: oklch(0.95 0.01 250);
+  --ring: oklch(0.5 0.18 180 / 0.4);
+  
+  /* Chart Colors - Vibrant and distinct */
+  --chart-1: oklch(0.5 0.18 180);    /* Primary teal */
+  --chart-2: oklch(0.55 0.2 220);    /* Blue */
+  --chart-3: oklch(0.6 0.18 280);    /* Purple */
+  --chart-4: oklch(0.58 0.22 25);    /* Red/Orange */
+  --chart-5: oklch(0.7 0.18 85);     /* Yellow/Amber */
+  
+  /* Success Color */
+  --success: oklch(0.55 0.18 150);
+  --success-foreground: oklch(1 0 0);
+  
+  /* Info Color */
+  --info: oklch(0.6 0.18 240);
+  --info-foreground: oklch(1 0 0);
+  
+  /* Warning Color */
+  --warning: oklch(0.7 0.18 85);
+  --warning-foreground: oklch(0.15 0 0);
 }
 
 .dark {
-  /* Dark Theme Variables */
-  --background: oklch(0.1 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.15 0 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.55 0.15 160);
-  --primary-foreground: oklch(0.1 0 0);
-  --secondary: oklch(0.25 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.55 0.15 160);
-  --accent-foreground: oklch(0.1 0 0);
-  --destructive: oklch(0.6 0.25 15);
-  --destructive-foreground: oklch(0.95 0 0);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.55 0.15 160 / 0.5);
+  /* ========================================
+     DARK THEME - Deep and modern
+     ======================================== */
+  
+  /* Base Colors - Deeper blacks with slight warmth */
+  --background: oklch(0.12 0.01 250);
+  --foreground: oklch(0.95 0.01 250);
+  
+  /* Card & Surface Colors */
+  --card: oklch(0.17 0.01 250);
+  --card-foreground: oklch(0.95 0.01 250);
+  --popover: oklch(0.17 0.01 250);
+  --popover-foreground: oklch(0.95 0.01 250);
+  
+  /* Primary Colors - Brighter for dark mode */
+  --primary: oklch(0.6 0.2 180);
+  --primary-foreground: oklch(0.12 0.01 250);
+  --accent: oklch(0.65 0.2 200);
+  --accent-foreground: oklch(0.12 0.01 250);
+  
+  /* Secondary Colors */
+  --secondary: oklch(0.22 0.01 250);
+  --secondary-foreground: oklch(0.95 0.01 250);
+  
+  /* Muted Colors */
+  --muted: oklch(0.22 0.01 250);
+  --muted-foreground: oklch(0.65 0.02 250);
+  
+  /* Destructive/Error Colors */
+  --destructive: oklch(0.62 0.24 25);
+  --destructive-foreground: oklch(0.95 0.01 250);
+  
+  /* Border & Input Colors */
+  --border: oklch(0.27 0.01 250);
+  --input: oklch(0.22 0.01 250);
+  --ring: oklch(0.6 0.2 180 / 0.4);
+  
+  /* Chart Colors - Enhanced for dark mode */
+  --chart-1: oklch(0.6 0.2 180);     /* Bright teal */
+  --chart-2: oklch(0.65 0.22 220);   /* Bright blue */
+  --chart-3: oklch(0.7 0.2 280);     /* Bright purple */
+  --chart-4: oklch(0.62 0.24 25);    /* Bright red/orange */
+  --chart-5: oklch(0.75 0.2 85);     /* Bright yellow/amber */
+  
+  /* Success Color */
+  --success: oklch(0.6 0.2 150);
+  --success-foreground: oklch(0.95 0.01 250);
+  
+  /* Info Color */
+  --info: oklch(0.65 0.2 240);
+  --info-foreground: oklch(0.95 0.01 250);
+  
+  /* Warning Color */
+  --warning: oklch(0.75 0.2 85);
+  --warning-foreground: oklch(0.12 0.01 250);
+}
 
-  /* Chart Colors (Dark) */
-  --chart-1: oklch(0.55 0.15 160);
-  --chart-2: oklch(0.65 0.15 160);
-  --chart-3: oklch(0.7 0.2 220);
-  --chart-4: oklch(0.6 0.25 15);
-  --chart-5: oklch(0.8 0.15 60);
+/* ========================================
+   THEME TRANSITION
+   ======================================== */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Disable transitions for specific properties during theme change */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR THEMING
+   ======================================== */
+:root {
+  scrollbar-color: var(--border) var(--background);
+  scrollbar-width: thin;
+}
+
+.dark {
+  scrollbar-color: var(--muted-foreground) var(--background);
+}
+
+/* ========================================
+   GRADIENT UTILITIES
+   ======================================== */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+.gradient-destructive {
+  background: linear-gradient(135deg, var(--destructive), oklch(0.65 0.24 45));
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, var(--success), oklch(0.6 0.2 170));
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   GLASSMORPHISM UTILITIES
+   ======================================== */
+.glass {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.2);
+}
+
+.dark .glass {
+  background: oklch(0.17 0.01 250 / 0.7);
+  border: 1px solid oklch(0.3 0.01 250 / 0.2);
+}
+
+/* ========================================
+   STATUS COLORS
+   ======================================== */
+:root {
+  --status-online: oklch(0.55 0.18 150);
+  --status-away: oklch(0.7 0.18 85);
+  --status-busy: oklch(0.58 0.22 25);
+  --status-offline: oklch(0.45 0.02 250);
+}
+
+/* ========================================
+   SEMANTIC COLORS FOR DISASTER MANAGEMENT
+   ======================================== */
+:root {
+  /* Alert Levels */
+  --alert-critical: oklch(0.58 0.22 25);
+  --alert-high: oklch(0.62 0.2 40);
+  --alert-medium: oklch(0.7 0.18 85);
+  --alert-low: oklch(0.75 0.15 110);
+  --alert-normal: oklch(0.5 0.18 180);
+  
+  /* Water Levels */
+  --water-critical: oklch(0.58 0.22 25);
+  --water-warning: oklch(0.7 0.18 85);
+  --water-normal: oklch(0.5 0.18 180);
+  --water-low: oklch(0.75 0.15 110);
+}
+
+.dark {
+  /* Enhanced visibility in dark mode */
+  --alert-critical: oklch(0.62 0.24 25);
+  --alert-high: oklch(0.66 0.22 40);
+  --alert-medium: oklch(0.75 0.2 85);
+  --alert-low: oklch(0.8 0.18 110);
+  --alert-normal: oklch(0.6 0.2 180);
+  
+  --water-critical: oklch(0.62 0.24 25);
+  --water-warning: oklch(0.75 0.2 85);
+  --water-normal: oklch(0.6 0.2 180);
+  --water-low: oklch(0.8 0.18 110);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.bg-primary { background-color: var(--primary); color: var(--primary-foreground); }
+.bg-secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+.bg-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
+.bg-muted { background-color: var(--muted); color: var(--muted-foreground); }
+.bg-success { background-color: var(--success); color: var(--success-foreground); }
+.bg-warning { background-color: var(--warning); color: var(--warning-foreground); }
+.bg-info { background-color: var(--info); color: var(--info-foreground); }
+
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary-foreground); }
+.text-destructive { color: var(--destructive); }
+.text-muted { color: var(--muted-foreground); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-info { color: var(--info); }
+
+.border-primary { border-color: var(--primary); }
+.border-destructive { border-color: var(--destructive); }
+.border-success { border-color: var(--success); }
+.border-warning { border-color: var(--warning); }
+.border-info { border-color: var(--info); }
+
+/* ========================================
+   FOCUS RING VARIANTS
+   ======================================== */
+.focus-ring-primary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.focus-ring-destructive:focus-visible {
+  outline: 2px solid var(--destructive);
+  outline-offset: 2px;
 }

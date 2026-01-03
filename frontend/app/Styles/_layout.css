@@ -1,32 +1,125 @@
 /*
  * LAYOUT
- * Styles for major page structure like containers and grids.
+ * Modern page structure with responsive grids and flexible containers.
+ * Enhanced with contemporary layout patterns.
 */
 
+/* CONTAINER SYSTEM */
 .container {
-  width: 90%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--spacing-lg) 0;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
 }
 
+.container-narrow {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.container-wide {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.container-fluid {
+  width: 100%;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+/* SECTION SPACING */
+.section {
+  padding: var(--spacing-3xl) 0;
+}
+
+.section-sm {
+  padding: var(--spacing-2xl) 0;
+}
+
+.section-lg {
+  padding: var(--spacing-4xl) 0;
+}
+
+/* HEADER LAYOUTS */
 .main-header {
-  padding-bottom: var(--spacing-lg);
+  padding: var(--spacing-xl) 0;
   border-bottom: 1px solid var(--border);
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
+  background: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  backdrop-filter: var(--backdrop-blur-md);
 }
 
-.grid-container {
-  display: grid;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--spacing-lg);
 }
 
-/* A responsive grid for dashboard cards */
+.header-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+/* GRID SYSTEM - Modern and flexible */
+.grid-container {
+  display: grid;
+  gap: var(--grid-gap);
+}
+
+/* Responsive grid patterns */
+.grid-cols-1 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .grid-cols-4-responsive {
   grid-template-columns: repeat(1, 1fr);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .grid-cols-4-responsive {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -36,4 +129,250 @@
   .grid-cols-4-responsive {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* Auto-fit grid for flexible layouts */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--grid-gap);
+}
+
+.grid-auto-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--grid-gap);
+}
+
+/* FLEXBOX UTILITIES */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+.gap-2xl { gap: var(--spacing-2xl); }
+
+/* DASHBOARD SPECIFIC LAYOUTS */
+.dashboard-layout {
+  display: grid;
+  gap: var(--spacing-xl);
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 250px 1fr;
+  }
+}
+
+.dashboard-sidebar {
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: var(--spacing-xl);
+}
+
+.dashboard-main {
+  padding: var(--spacing-xl);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Disaster Management Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-xl);
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+  
+  .overview-cards {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-lg);
+  }
+  
+  .map-card {
+    grid-column: 1 / 9;
+  }
+  
+  .sidebar-cards {
+    grid-column: 9 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+  }
+}
+
+/* CARD GRID LAYOUTS */
+.card-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.card-grid-dense {
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+/* SPLIT LAYOUT - For two-column layouts */
+.split-layout {
+  display: grid;
+  gap: var(--spacing-xl);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .split-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.split-layout-thirds {
+  display: grid;
+  gap: var(--spacing-xl);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .split-layout-thirds {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* MAP CONTAINER */
+.map-container {
+  height: 500px;
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--muted);
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  .map-container {
+    height: 600px;
+  }
+}
+
+/* STACK LAYOUT - Vertical spacing */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.stack-xs > * + * { margin-top: var(--spacing-xs); }
+.stack-sm > * + * { margin-top: var(--spacing-sm); }
+.stack-md > * + * { margin-top: var(--spacing-md); }
+.stack-lg > * + * { margin-top: var(--spacing-lg); }
+.stack-xl > * + * { margin-top: var(--spacing-xl); }
+
+/* RESPONSIVE UTILITIES */
+.hidden-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hidden-mobile {
+    display: block;
+  }
+}
+
+.hidden-desktop {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .hidden-desktop {
+    display: none;
+  }
+}
+
+/* ASPECT RATIO CONTAINERS */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+/* SCROLLABLE AREAS */
+.scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollable-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* STICKY ELEMENTS */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+/* CENTERED CONTENT */
+.center-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  text-align: center;
 }
