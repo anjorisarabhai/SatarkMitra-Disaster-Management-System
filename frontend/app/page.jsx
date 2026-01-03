@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
 import {
   Activity,
   MapPin,
@@ -13,16 +14,26 @@ import {
   Route,
   X,
   Plus,
-  CloudRain, // Import the CloudRain icon
-  Droplets,  // Import Droplets icon
-  Waves      // Import Waves icon
+  CloudRain,
+  Droplets,
+  Waves
 } from "lucide-react"
 
-// Import the DelhiPanel component (Ensure this file exists!)
-// If you haven't created it yet, comment this line out.
-import DelhiPanel from '@/src/component/DelhiPanel';
+// CRITICAL FIX: Lazy load DelhiPanel to prevent page timeout
+const DelhiPanel = dynamic(
+  () => import('@/src/component/DelhiPanel'),
+  {
+    loading: () => (
+      <div className="loading-overlay">
+        <div className="spinner"></div>
+        <p>Loading Delhi Mode...</p>
+      </div>
+    ),
+    ssr: false
+  }
+);
 
-// --- AI PREDICTION COMPONENT (Fixed URL) ---
+// --- AI PREDICTION COMPONENT ---
 const FloodAlertPanel = () => {
   const [riverLevel, setRiverLevel] = useState('');
   const [rainfall, setRainfall] = useState('');
@@ -35,8 +46,6 @@ const FloodAlertPanel = () => {
     setResult(null);
 
     try {
-      // Connect to Flask Backend (Port 8000)
-      // FIXED: Removed trailing slash
       const res = await fetch('http://127.0.0.1:8000/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,7 +119,6 @@ const FloodAlertPanel = () => {
                   AI Confidence: <strong>{result.flood_probability}%</strong>
                 </p>
                 
-                {/* Advanced Details */}
                 <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 grid grid-cols-2 gap-x-6 gap-y-1">
                   <span>XGBoost Vote: <b className={result.model_details.xgboost_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.xgboost_risk ? 'DANGER' : 'SAFE'}</b></span>
                   <span>SVM Vote: <b className={result.model_details.svm_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.svm_risk ? 'DANGER' : 'SAFE'}</b></span>
@@ -125,7 +133,7 @@ const FloodAlertPanel = () => {
   );
 };
 
-// --- Initial Mock Data ---
+// Mock data - moved outside to prevent re-initialization
 const initialMockAlerts = [
   { id: 1, type: "critical", title: "Flash Flood Warning", location: "Mandakini River", time: "2 min ago", acknowledged: false },
   { id: 2, type: "warning", title: "Rising Water Levels", location: "Gaurikund Station", time: "15 min ago", acknowledged: true },
@@ -161,19 +169,15 @@ export default function FloodManagementApp() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isWorldWindLoaded, setIsWorldWindLoaded] = useState(false);
 
-  // --- State for dynamic lists ---
   const [alerts, setAlerts] = useState(initialMockAlerts);
   const [contacts, setContacts] = useState(initialEmergencyContacts);
 
-  // --- State for Modals ---
   const [isAddAlertModalOpen, setIsAddAlertModalOpen] = useState(false);
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   
-  // --- State for Form Inputs ---
   const [newAlert, setNewAlert] = useState({ type: 'info', title: '', location: '' });
   const [newContact, setNewContact] = useState({ name: '', role: '', contact: '' });
 
-  // --- Event Handlers ---
   const handleAddAlert = (e) => {
     e.preventDefault();
     const newAlertObject = { id: Date.now(), ...newAlert, time: 'Just now', acknowledged: false };
@@ -190,26 +194,26 @@ export default function FloodManagementApp() {
     setNewContact({ name: '', role: '', contact: '' });
   };
   
-  // --- Effects ---
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
   
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const checkWorldWind = () => {
-        if (typeof window.WorldWind !== "undefined") { setIsWorldWindLoaded(true); } else {
-          const script = document.createElement("script");
-          script.src = "https://unpkg.com/@nasaworldwind/worldwind@0.9.0/build/dist/worldwind.min.js";
-          script.async = true;
-          script.onload = () => setIsWorldWindLoaded(true);
-          document.head.appendChild(script);
-        }
-      };
-      checkWorldWind();
+    if (typeof window === "undefined" || activeTab !== 'dashboard') return;
+    
+    if (typeof window.WorldWind !== "undefined") {
+      setIsWorldWindLoaded(true);
+      return;
     }
-  }, []);
+    
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/@nasaworldwind/worldwind@0.9.0/build/dist/worldwind.min.js";
+    script.async = true;
+    script.onload = () => setIsWorldWindLoaded(true);
+    script.onerror = () => console.error("Failed to load WorldWind");
+    document.head.appendChild(script);
+  }, [activeTab]);
 
   const initializeWorldWind = (canvasId) => {
     if (!isWorldWindLoaded) return;
@@ -218,14 +222,22 @@ export default function FloodManagementApp() {
     try {
       const wwd = new window.WorldWind.WorldWindow(canvasId);
       canvas.setAttribute('data-initialized', 'true');
-      const layers = [ new window.WorldWind.BMNGOneImageLayer(), new window.WorldWind.BingAerialWithLabelsLayer(), new window.WorldWind.CompassLayer() ];
+      const layers = [ 
+        new window.WorldWind.BMNGOneImageLayer(), 
+        new window.WorldWind.BingAerialWithLabelsLayer(), 
+        new window.WorldWind.CompassLayer() 
+      ];
       layers.forEach(layer => wwd.addLayer(layer));
       wwd.goTo(new window.WorldWind.Position(30.735, 79.066, 15000));
-    } catch (error) { console.error("WorldWind initialization failed:", error); }
+    } catch (error) { 
+      console.error("WorldWind initialization failed:", error); 
+    }
   };
   
   useEffect(() => {
-    if (activeTab === 'dashboard') { setTimeout(() => initializeWorldWind('worldwind-canvas'), 0); }
+    if (activeTab === 'dashboard' && isWorldWindLoaded) { 
+      setTimeout(() => initializeWorldWind('worldwind-canvas'), 100); 
+    }
   }, [activeTab, isWorldWindLoaded]);
 
   const getStatusClass = (status) => {
@@ -233,6 +245,7 @@ export default function FloodManagementApp() {
     if (status === "warning") return "badge-warning";
     return "badge-normal";
   };
+  
   const getAlertIcon = (type) => {
     const iconClass = type === 'critical' ? 'icon-destructive' : (type === 'warning' ? 'icon-warning' : 'icon-info');
     return <AlertTriangle className={`icon ${iconClass}`} />;
@@ -241,7 +254,6 @@ export default function FloodManagementApp() {
   return (
     <> 
       <div className="container">
-        {/* Header */}
         <div className="main-header">
           <h1>Kedarnath Flood Management</h1>
           <p>Real-time monitoring and emergency response dashboard</p>
@@ -250,13 +262,8 @@ export default function FloodManagementApp() {
         <div className="tabs-list">
             <button className={`tab-trigger ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}><MapPin /> Dashboard</button>
             <button className={`tab-trigger ${activeTab === 'water-levels' ? 'active' : ''}`} onClick={() => setActiveTab('water-levels')}><Activity /> Water Levels</button>
-            
-            {/* AI PREDICTION BUTTON */}
             <button className={`tab-trigger ${activeTab === 'prediction' ? 'active' : ''}`} onClick={() => setActiveTab('prediction')}><Shield /> AI Prediction</button>
-            
-            {/* DELHI MODE BUTTON */}
             <button className={`tab-trigger ${activeTab === 'delhi' ? 'active' : ''}`} onClick={() => setActiveTab('delhi')}><CloudRain /> Delhi Mode</button>
-            
             <button className={`tab-trigger ${activeTab === 'alerts' ? 'active' : ''}`} onClick={() => setActiveTab('alerts')}><AlertTriangle /> Alerts</button>
             <button className={`tab-trigger ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}><Phone /> Contacts</button>
             <button className={`tab-trigger ${activeTab === 'protocols' ? 'active' : ''}`} onClick={() => setActiveTab('protocols')}><ClipboardList /> Protocols</button>
@@ -264,7 +271,6 @@ export default function FloodManagementApp() {
         </div>
 
         <main>
-          {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="dashboard-grid animate-fadeInUp">
                 <div className="overview-cards">
@@ -282,14 +288,12 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Water Levels Tab */}
           {activeTab === 'water-levels' && (
              <div className="grid-container grid-cols-3-responsive animate-fadeInUp">
                 {waterStations.map(station => (<div key={station.id} className="card"><div className="card-header"><div className="flex-between"><h3 className="card-title">{station.name}</h3><span className={`badge ${getStatusClass(station.status)}`}>{station.status}</span></div><p className="card-description">{station.location}</p></div><div className="card-content"><div className="water-level-display"><span className="level-value">{station.currentLevel}m</span><span className="level-capacity">/ {station.capacity}m</span></div><div className="progress-bar-container"><div className={`progress-bar ${getStatusClass(station.status)}`} style={{width: `${(station.currentLevel / station.capacity) * 100}%`}}></div></div><p className="text-xs text-muted-foreground">Last updated: {station.lastUpdated}</p></div></div>))}
             </div>
           )}
           
-          {/* --- AI PREDICTION TAB CONTENT --- */}
           {activeTab === 'prediction' && (
             <div className="animate-fadeInUp">
                <div className="tab-header text-center mb-6">
@@ -300,19 +304,16 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* --- DELHI MODE TAB CONTENT --- */}
           {activeTab === 'delhi' && (
             <div className="animate-fadeInUp">
                 <div className="tab-header text-center mb-6">
                     <h2>Urban Water-Logging Monitor</h2>
                     <p className="text-gray-500">Real-time Analysis for Delhi NCR</p>
                 </div>
-                {/* Ensure you have DelhiPanel.jsx in your components folder */}
                 <DelhiPanel />
             </div>
           )}
 
-          {/* ALERTS TAB */}
           {activeTab === 'alerts' && (
               <div className="animate-fadeInUp">
                   <div className="tab-header">
@@ -338,7 +339,6 @@ export default function FloodManagementApp() {
               </div>
           )}
 
-          {/* CONTACTS TAB */}
           {activeTab === 'contacts' && (
             <div className="animate-fadeInUp">
                 <div className="tab-header">
@@ -360,7 +360,6 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Protocols Tab */}
           {activeTab === 'protocols' && (
             <div className="grid-container grid-cols-3-responsive animate-fadeInUp">
               <div className="card"><h3 className="card-title protocol-title normal">Normal Conditions</h3><ul className="protocol-list">{emergencyProtocols.normal.map((item, i) => <li key={i}><Check /> {item}</li>)}</ul></div>
@@ -369,7 +368,6 @@ export default function FloodManagementApp() {
             </div>
           )}
 
-          {/* Resources Tab */}
           {activeTab === 'resources' && (
             <div className="animate-fadeInUp">
               {nearbyResources.map(resource => (
@@ -383,7 +381,6 @@ export default function FloodManagementApp() {
         </main>
       </div>
 
-      {/* --- ADD ALERT MODAL --- */}
       {isAddAlertModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-content animate-fadeInUp">
@@ -417,7 +414,6 @@ export default function FloodManagementApp() {
         </div>
       )}
 
-      {/* --- ADD CONTACT MODAL --- */}
       {isAddContactModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-content animate-fadeInUp">
