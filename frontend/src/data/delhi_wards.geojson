@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Minto Bridge Ward",
+        "risk_status": "CRITICAL",
+        "risk_score": 85
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.215, 28.629],
+          [77.225, 28.629],
+          [77.225, 28.635],
+          [77.215, 28.635],
+          [77.215, 28.629]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ITO Ward",
+        "risk_status": "HIGH",
+        "risk_score": 65
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.235, 28.626],
+          [77.245, 28.626],
+          [77.245, 28.633],
+          [77.235, 28.633],
+          [77.235, 28.626]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Okhla Ward",
+        "risk_status": "HIGH",
+        "risk_score": 60
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.265, 28.533],
+          [77.275, 28.533],
+          [77.275, 28.540],
+          [77.265, 28.540],
+          [77.265, 28.533]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Civil Lines Ward",
+        "risk_status": "LOW",
+        "risk_score": 15
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.225, 28.680],
+          [77.235, 28.680],
+          [77.235, 28.688],
+          [77.225, 28.688],
+          [77.225, 28.680]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dwarka Ward",
+        "risk_status": "MODERATE",
+        "risk_score": 35
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.035, 28.590],
+          [77.050, 28.590],
+          [77.050, 28.600],
+          [77.035, 28.600],
+          [77.035, 28.590]
+        ]]
+      }
+    }
+  ]
+}
