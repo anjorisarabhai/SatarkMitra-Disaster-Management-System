@@ -8,6 +8,7 @@ import {
   MapPin
 } from "lucide-react"
 import dynamic from "next/dynamic"
+import DelhiMapLegend from "./DelhiMapLegend"
 
 const DelhiHotspotMap = dynamic(
   () => import("./DelhiHotspotMap"),
@@ -87,15 +88,16 @@ export default function DelhiPanel() {
         </div>
       )}
 
-      {/* 🔹 GIS HOTSPOT MAP */}
-      {zones.length > 0 && (
-        <div className="my-6">
-          <h4 className="font-semibold mb-2">
-            🗺️ Delhi Water‑Logging Hotspot Map
-          </h4>
-          <DelhiHotspotMap zones={zones} />
+      {/* 🔹 MAP + LEGEND */}
+      <div className="relative mb-6">
+        <DelhiHotspotMap zones={zones} />
+
+        {/* Legend overlay */}
+        <div className="absolute bottom-4 left-4 z-[1000]">
+          <DelhiMapLegend />
         </div>
-      )}
+      </div>
+
 
 
 
