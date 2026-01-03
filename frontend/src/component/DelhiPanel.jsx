@@ -1,128 +1,124 @@
 "use client"
-import { useState } from "react"
+
+import { useEffect, useState } from "react"
 import {
   CloudRain,
   AlertTriangle,
   Check,
-  Thermometer,
-  Droplets
+  MapPin
 } from "lucide-react"
 
 export default function DelhiPanel() {
-  const [drainage, setDrainage] = useState(50)
-  const [elevation, setElevation] = useState(210)
-  const [result, setResult] = useState(null)
+  const [zones, setZones] = useState([])
+  const [cityWeather, setCityWeather] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const runDelhiPrediction = async () => {
+  const fetchDelhiHotspots = async () => {
     setLoading(true)
-    setResult(null)
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/predict_delhi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          drainage_capacity: drainage,
-          elevation: elevation
-        })
-      })
-
+      const res = await fetch("http://127.0.0.1:8000/api/predict_delhi")
       if (!res.ok) throw new Error("Server error")
 
       const data = await res.json()
-      if (data.status === "success") setResult(data)
-      else alert(data.message)
-    } catch {
+      if (data.status === "success") {
+        setZones(data.zones_data || [])
+        setCityWeather(data.city_weather || null)
+      } else {
+        alert(data.message)
+      }
+    } catch (err) {
       alert("Backend not reachable")
     }
 
     setLoading(false)
   }
 
+  // Auto‑fetch on component load
+  useEffect(() => {
+    fetchDelhiHotspots()
+  }, [])
+
+  const getRiskIcon = (status) => {
+    if (status === "CRITICAL") return <AlertTriangle className="text-red-600" />
+    if (status === "HIGH") return <AlertTriangle className="text-orange-500" />
+    if (status === "MODERATE") return <AlertTriangle className="text-yellow-500" />
+    return <Check className="text-green-600" />
+  }
+
+  const getRiskColor = (status) => {
+    if (status === "CRITICAL") return "border-red-500 bg-red-50"
+    if (status === "HIGH") return "border-orange-400 bg-orange-50"
+    if (status === "MODERATE") return "border-yellow-400 bg-yellow-50"
+    return "border-green-400 bg-green-50"
+  }
+
   return (
-    <div className="card max-w-xl mx-auto p-4">
-      <h3 className="card-title flex gap-2 items-center mb-4">
-        <CloudRain /> Delhi Water‑Logging Risk
+    <div className="card max-w-4xl mx-auto p-4">
+      <h3 className="card-title flex gap-2 items-center mb-2">
+        <CloudRain /> Delhi Water‑Logging Hotspot Monitor
       </h3>
 
-      {/* 🔹 INPUT SECTION */}
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Drainage Capacity
-          </label>
-          <input
-            type="number"
-            value={drainage}
-            onChange={e => setDrainage(Number(e.target.value))}
-            className="input w-full"
-          />
-        </div>
+      <p className="text-sm text-gray-600 mb-4">
+        Zone‑wise flood risk based on live rainfall and infrastructure vulnerability
+      </p>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Elevation (meters)
-          </label>
-          <input
-            type="number"
-            value={elevation}
-            onChange={e => setElevation(Number(e.target.value))}
-            className="input w-full"
-          />
+      {/* 🔹 CITY WEATHER SUMMARY */}
+      {cityWeather && (
+        <div className="mb-4 p-3 rounded border bg-gray-50">
+          <p>
+            <b>Current Weather:</b> {cityWeather.description}
+          </p>
+          <p>
+            <b>Rain (last 1h):</b> {cityWeather.rain_1h} mm
+          </p>
+          <p>
+            <b>Temperature:</b> {cityWeather.temperature} °C &nbsp;|&nbsp;
+            <b>Humidity:</b> {cityWeather.humidity} %
+          </p>
         </div>
-      </div>
+      )}
 
+      {/* 🔹 REFRESH BUTTON */}
       <button
-        onClick={runDelhiPrediction}
+        onClick={fetchDelhiHotspots}
         disabled={loading}
-        className="btn btn-primary mt-4 w-full"
+        className="btn btn-primary mb-4"
       >
-        {loading ? "Analyzing..." : "Check Risk"}
+        {loading ? "Updating..." : "Refresh Hotspot Risk"}
       </button>
 
-      {result && (
-        <div className="mt-4 space-y-2">
-          <h4 className="flex items-center gap-2 font-semibold">
-            {result.water_logging_risk === "CRITICAL"
-              ? <AlertTriangle className="text-red-500" />
-              : <Check className="text-green-500" />
-            }
-            {result.water_logging_risk} RISK
-          </h4>
+      {/* 🔹 ZONE LIST */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {zones.map((zone, index) => (
+          <div
+            key={index}
+            className={`p-4 rounded border-l-4 ${getRiskColor(zone.risk_status)}`}
+          >
+            <h4 className="flex items-center gap-2 font-semibold mb-1">
+              <MapPin size={16} />
+              {zone.zone_name}
+            </h4>
 
-          <p>Risk Score: <b>{result.risk_score}</b></p>
+            <p className="flex items-center gap-2">
+              {getRiskIcon(zone.risk_status)}
+              <b>{zone.risk_status} RISK</b>
+            </p>
 
-          <p>
-            Rain (last 1h): <b>{result.details?.live_rain_1h ?? 0} mm</b>
-          </p>
+            <p>Risk Score: <b>{zone.risk_score}</b></p>
 
-          <p>
-            Weather: <b>{result.details?.weather ?? "Unavailable"}</b>
-          </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Elevation: {zone.details.elevation} m<br />
+              Drainage: {zone.details.drainage}
+            </p>
+          </div>
+        ))}
+      </div>
 
-          <hr />
-
-          <p className="flex items-center gap-2">
-            <Thermometer size={16} />
-            Temperature:{" "}
-            <b>
-              {result.live_weather?.temperature != null
-                ? `${result.live_weather.temperature} °C`
-                : "N/A"}
-            </b>
-          </p>
-
-          <p className="flex items-center gap-2">
-            <Droplets size={16} />
-            Humidity:{" "}
-            <b>
-              {result.live_weather?.humidity != null
-                ? `${result.live_weather.humidity} %`
-                : "N/A"}
-            </b>
-          </p>
-        </div>
+      {zones.length === 0 && !loading && (
+        <p className="text-center text-gray-500 mt-4">
+          No hotspot data available.
+        </p>
       )}
     </div>
   )
