@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// 🔧 Fix default marker issue in Next.js
+// Fix Default Icon
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -12,7 +12,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
 
-// 🎨 Risk marker colors
 const getMarkerColor = (risk) => {
   if (risk === "CRITICAL") return "red"
   if (risk === "HIGH") return "orange"
@@ -35,9 +34,9 @@ export default function DelhiHotspotMap({ zones = [] }) {
     <MapContainer
       center={[28.6139, 77.2090]}
       zoom={11}
-      // ✅ CHANGED: Height is now 100% to fill the parent flex container
-      style={{ height: "100%", width: "100%", minHeight: "400px" }}
-      className="rounded-lg bg-gray-100"
+      // ✅ CHANGED: 100% Height to fill the new parent container
+      style={{ height: "100%", width: "100%", minHeight: "100%" }}
+      className="z-0" // Ensure it stays behind floating controls
     >
       <TileLayer
         attribution="© OpenStreetMap contributors"
@@ -54,22 +53,26 @@ export default function DelhiHotspotMap({ zones = [] }) {
             position={[zone.latitude, zone.longitude]}
             icon={createIcon(getMarkerColor(risk))}
           >
-            {/* 🟡 HOVER TOOLTIP */}
             <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-              <div className="text-xs leading-tight">
-                <b>{zone.zone_name}</b><br />
-                Risk: {risk}<br />
-                Score: {zone.risk_score}
+              <div className="text-xs font-bold">
+                {zone.zone_name}<br/>
+                <span className={risk === "CRITICAL" ? "text-red-600" : "text-gray-600"}>
+                    {risk} ({zone.risk_score})
+                </span>
               </div>
             </Tooltip>
 
-            {/* 🔵 CLICK POPUP */}
             <Popup>
-              <b>{zone.zone_name}</b><br />
-              <b>Risk:</b> {risk}<br />
-              <b>Score:</b> {zone.risk_score}<br />
-              <b>Elevation:</b> {details.elevation ?? "N/A"} m<br />
-              <b>Drainage:</b> {details.drainage ?? "Unknown"}
+              <div className="p-1">
+                <h4 className="font-bold text-sm mb-2">{zone.zone_name}</h4>
+                <div className="text-xs space-y-1">
+                    <p>Risk: <b>{risk}</b></p>
+                    <p>Score: {zone.risk_score}</p>
+                    <hr className="my-1"/>
+                    <p>Elevation: {details.elevation}m</p>
+                    <p>Drainage: {details.drainage}</p>
+                </div>
+              </div>
             </Popup>
           </Marker>
         )
