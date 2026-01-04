@@ -4,31 +4,26 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// 🔧 Fix default marker icon issue in Next.js
-if (typeof window !== 'undefined') {
-  delete L.Icon.Default.prototype._getIconUrl
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  })
-}
+// Fix default marker issue
+delete L.Icon.Default.prototype._getIconUrl
 
-// 🎨 Risk Colors
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+})
+
+// 🎨 Risk marker colors
 const getMarkerColor = (risk) => {
-  switch(risk) {
-    case "CRITICAL": return "red"
-    case "HIGH": return "orange"
-    case "MODERATE": return "gold"
-    default: return "green"
-  }
+  if (risk === "CRITICAL") return "red"
+  if (risk === "HIGH") return "orange"
+  if (risk === "MODERATE") return "gold"
+  return "green"
 }
 
-const createIcon = (color) => {
-  // Ensure this runs only on client
-  if (typeof window === 'undefined') return null
-  
-  return new L.Icon({
+const createIcon = (color) =>
+  new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
     shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     iconSize: [25, 41],
@@ -36,49 +31,69 @@ const createIcon = (color) => {
     popupAnchor: [1, -34],
     shadowSize: [41, 41],
   })
-}
 
 export default function DelhiHotspotMap({ zones = [] }) {
+  const center = [28.6139, 77.209] // Delhi approximate
+
   return (
-    <MapContainer 
-      center={[28.6139, 77.2090]} 
-      zoom={11} 
-      style={{ height: "100%", width: "100%", minHeight: "100%" }}
-      className="z-0 bg-slate-100"
+    <MapContainer
+      center={center}
+      zoom={11}
+      scrollWheelZoom={false}
+      className="h-full w-full"
+      style={{ minHeight: "260px" }}
     >
-      <TileLayer 
-        attribution="© OpenStreetMap" 
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+      <TileLayer
+        attribution="&copy; OpenStreetMap contributors"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      
-      {zones.map((zone, idx) => (
-        <Marker 
-          key={idx} 
-          position={[zone.latitude, zone.longitude]} 
-          icon={createIcon(getMarkerColor(zone.risk_status))}
-        >
-          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-            <div className="text-xs font-bold">
-              {zone.zone_name}<br/>
-              <span className={zone.risk_status === "CRITICAL" ? "text-red-600" : "text-slate-600"}>
-                {zone.risk_status} ({zone.risk_score})
-              </span>
-            </div>
-          </Tooltip>
-          
-          <Popup>
-            <div className="p-1 min-w-[150px]">
-              <h4 className="font-bold text-sm mb-2 border-b pb-1">{zone.zone_name}</h4>
-              <div className="text-xs space-y-1">
-                <p><b>Risk:</b> {zone.risk_status}</p>
-                <p><b>Score:</b> {zone.risk_score}</p>
-                <p><b>Elevation:</b> {zone.details?.elevation} m</p>
-                <p><b>Drainage:</b> {zone.details?.drainage}</p>
+
+      {zones.map((zone, idx) => {
+        const risk = zone?.risk_status ?? "LOW"
+        const details = zone?.details ?? {}
+        const lat = zone?.lat ?? zone?.latitude
+        const lng = zone?.lon ?? zone?.longitude
+
+        if (lat == null || lng == null) return null
+
+        const color = getMarkerColor(risk)
+
+        return (
+          <Marker
+            key={`${zone.zone_name || "zone"}-${idx}`}
+            position={[lat, lng]}
+            icon={createIcon(color)}
+          >
+            {/* Hover tooltip */}
+            <Tooltip>
+              <div className="text-xs">
+                <div className="font-semibold">
+                  {zone.zone_name || "Zone"}
+                </div>
+                <div>Risk: {risk}</div>
+                <div>Score: {zone.risk_score}</div>
               </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Tooltip>
+
+            {/* Click popup */}
+            <Popup>
+              <div className="space-y-1 text-xs">
+                <div className="font-semibold text-sm mb-1">
+                  {zone.zone_name || "Zone"}
+                </div>
+                <div>Risk: {risk}</div>
+                <div>Score: {zone.risk_score}</div>
+                <div>
+                  Elevation: {details.elevation ?? "N/A"} m
+                </div>
+                <div>
+                  Drainage: {details.drainage ?? "Unknown"}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
     </MapContainer>
   )
 }
