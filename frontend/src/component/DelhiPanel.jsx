@@ -4,19 +4,23 @@ import { useEffect, useState } from "react"
 import { 
   CloudRain, 
   AlertTriangle, 
-  Check, 
   MapPin, 
   Play, 
-  Pause, 
-  Thermometer, 
-  Droplets 
+  Pause,
+  Thermometer,
+  Droplets,
+  Wind
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import DelhiMapLegend from "./DelhiMapLegend"
 
+// Lazy load map to prevent SSR issues
 const DelhiHotspotMap = dynamic(
   () => import("./DelhiHotspotMap"),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <div className="h-full w-full flex items-center justify-center bg-slate-100 text-slate-400">Loading Map...</div>
+  }
 )
 
 export default function DelhiPanel() {
@@ -29,6 +33,7 @@ export default function DelhiPanel() {
   // 🎬 Time-lapse
   const [playing, setPlaying] = useState(false)
 
+  // 1. Fetch Data
   const fetchDelhiHotspots = async () => {
     setLoading(true)
     try {
@@ -37,18 +42,18 @@ export default function DelhiPanel() {
       if (data.status === "success") {
         setZones(data.zones_data || [])
         setCityWeather(data.city_weather || null)
-        // Set initial simulation to actual rain if available
+        // Initialize sim with real rain
         if (data.city_weather?.rain_1h) setSimulatedRain(data.city_weather.rain_1h)
       }
-    } catch {
-      console.error("Backend unreachable")
+    } catch (err) {
+      console.error("Backend error", err)
     }
     setLoading(false)
   }
 
   useEffect(() => { fetchDelhiHotspots() }, [])
 
-  // 🎬 Time-lapse effect
+  // 2. Time-lapse
   useEffect(() => {
     if (!playing) return
     const interval = setInterval(() => {
@@ -57,7 +62,7 @@ export default function DelhiPanel() {
     return () => clearInterval(interval)
   }, [playing])
 
-  // 🔹 Simulation Logic
+  // 3. Risk Logic
   const applyRainSimulation = (zone) => {
     let score = zone.risk_score
     if (simulatedRain > 40) score += 40
@@ -73,127 +78,126 @@ export default function DelhiPanel() {
   }
 
   const simulatedZones = zones.map(applyRainSimulation)
-  // Sort by risk so highest are at top of list
-  const sortedZones = [...simulatedZones].sort((a, b) => b.risk_score - a.risk_score)
+  const topHotspots = [...simulatedZones].sort((a, b) => b.risk_score - a.risk_score).slice(0, 5)
+
+  // Helpers
+  const getActionSuggestion = (risk) => {
+    switch (risk) {
+      case "CRITICAL": return "🚨 Immediate intervention required"
+      case "HIGH": return "⚠️ Deploy traffic diversion teams"
+      case "MODERATE": return "🛠️ Clear drains & monitor"
+      default: return "✅ Normal monitoring"
+    }
+  }
 
   const getRiskColor = (status) => {
-    if (status === "CRITICAL") return "border-l-4 border-red-500 bg-red-50"
-    if (status === "HIGH") return "border-l-4 border-orange-400 bg-orange-50"
-    if (status === "MODERATE") return "border-l-4 border-yellow-400 bg-yellow-50"
-    return "border-l-4 border-green-400 bg-green-50"
+    if (status === "CRITICAL") return "border-red-500 bg-red-50 text-red-900"
+    if (status === "HIGH") return "border-orange-500 bg-orange-50 text-orange-900"
+    if (status === "MODERATE") return "border-yellow-500 bg-yellow-50 text-yellow-900"
+    return "border-green-500 bg-green-50 text-green-900"
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
       
       {/* 🔹 HEADER & WEATHER STRIP */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
-            <CloudRain className="text-blue-600" /> Delhi Flood Monitor
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
+            <CloudRain className="text-blue-600 h-8 w-8" /> Delhi Flood Monitor
           </h2>
-          <p className="text-sm text-gray-500">Real-time zone vulnerability & simulation</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mt-1">Real-time Zone Vulnerability & Simulation</p>
         </div>
 
         {cityWeather && (
-          <div className="flex gap-4 text-sm">
-            <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg flex items-center gap-2">
-                <CloudRain size={16}/> <b>{cityWeather.rain_1h} mm</b>
+          <div className="flex gap-4 text-sm overflow-x-auto">
+            <div className="px-4 py-2 bg-blue-50 text-blue-800 rounded-lg flex items-center gap-2 border border-blue-100 whitespace-nowrap">
+                <CloudRain size={18}/> <div><p className="text-[10px] font-bold text-blue-400">RAIN (1H)</p><b>{cityWeather.rain_1h} mm</b></div>
             </div>
-            <div className="px-3 py-1 bg-orange-50 text-orange-700 rounded-lg flex items-center gap-2">
-                <Thermometer size={16}/> <b>{cityWeather.temperature}°C</b>
+            <div className="px-4 py-2 bg-orange-50 text-orange-800 rounded-lg flex items-center gap-2 border border-orange-100 whitespace-nowrap">
+                <Thermometer size={18}/> <div><p className="text-[10px] font-bold text-orange-400">TEMP</p><b>{cityWeather.temperature}°C</b></div>
             </div>
-            <div className="px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg flex items-center gap-2">
-                <Droplets size={16}/> <b>{cityWeather.humidity}%</b>
+            <div className="px-4 py-2 bg-cyan-50 text-cyan-800 rounded-lg flex items-center gap-2 border border-cyan-100 whitespace-nowrap">
+                <Droplets size={18}/> <div><p className="text-[10px] font-bold text-cyan-400">HUMIDITY</p><b>{cityWeather.humidity}%</b></div>
             </div>
           </div>
         )}
       </div>
 
-      {/* 🔹 MAIN GRID LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+      {/* 🔹 MAIN SPLIT LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[650px]">
         
-        {/* LEFT COL: MAP & CONTROLS (Takes 2/3 width) */}
+        {/* LEFT: MAP & CONTROLS (2/3 Width) */}
         <div className="lg:col-span-2 flex flex-col gap-4 h-full">
-            
-            {/* Simulation Controls Bar */}
-            <div className="bg-white p-3 rounded-lg shadow-sm border flex items-center gap-4">
-                <div className="flex-1">
-                    <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
-                        <span>RAINFALL SIMULATION</span>
-                        <span className="text-blue-600">{simulatedRain} mm/hr</span>
+            {/* Simulation Bar */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1 w-full">
+                    <div className="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                        <span>SIMULATED RAINFALL SCENARIO</span>
+                        <span className="text-blue-600 bg-blue-50 px-2 rounded">{simulatedRain} mm/hr</span>
                     </div>
                     <input 
                         type="range" min="0" max="50" 
                         value={simulatedRain} 
                         onChange={(e) => setSimulatedRain(Number(e.target.value))} 
-                        className="w-full accent-blue-600 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                 </div>
                 <button 
                     onClick={() => setPlaying(!playing)} 
-                    className="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2 px-3 py-2 rounded"
+                    className={`btn btn-sm flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${playing ? 'bg-red-50 text-red-600' : 'bg-blue-600 text-white shadow-md hover:bg-blue-700'}`}
                 >
                     {playing ? <Pause size={16} /> : <Play size={16} />}
-                    {playing ? "Pause" : "Play"}
+                    {playing ? "Stop" : "Simulate"}
                 </button>
             </div>
 
             {/* Map Container */}
-            <div className="relative flex-1 bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div className="relative flex-1 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[400px]">
                 <DelhiHotspotMap zones={simulatedZones} />
-                <div className="absolute bottom-4 left-4 z-[1000]">
+                <div className="absolute bottom-6 left-6 z-[1000]">
                     <DelhiMapLegend />
                 </div>
             </div>
         </div>
 
-        {/* RIGHT COL: SCROLLABLE LIST (Takes 1/3 width) */}
-        <div className="bg-white rounded-xl shadow-sm border flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-                <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                    <AlertTriangle className="text-red-500" size={18}/> Priority Zones
+        {/* RIGHT: PRIORITY LIST (1/3 Width) */}
+        <div className="bg-white rounded-xl shadow-sm border flex flex-col h-[500px] lg:h-full overflow-hidden">
+            <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
+                <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                    <AlertTriangle className="text-red-500" size={18}/> Top Risks
                 </h3>
-                <button onClick={fetchDelhiHotspots} className="text-xs text-blue-600 hover:underline">
-                    {loading ? "Updating..." : "Refresh"}
+                <button onClick={fetchDelhiHotspots} className="text-xs font-bold text-blue-600 hover:underline">
+                    {loading ? "..." : "REFRESH"}
                 </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                {sortedZones.map((zone, idx) => (
-                    <div key={idx} className={`p-3 rounded-lg bg-white shadow-sm border hover:shadow-md transition ${getRiskColor(zone.risk_status)}`}>
+                {topHotspots.map((zone, idx) => (
+                    <div key={idx} className={`p-3 rounded-lg border-l-4 bg-white border shadow-sm transition hover:shadow-md ${getRiskColor(zone.risk_status)}`}>
                         <div className="flex justify-between items-start">
                             <div>
-                                <h4 className="font-bold text-gray-800 text-sm flex items-center gap-1">
+                                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1">
                                     {zone.zone_name}
                                 </h4>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">
                                     Elev: {zone.details.elevation}m • Drain: {zone.details.drainage}
                                 </p>
                             </div>
-                            <div className="text-right">
-                                <span className="text-xs font-bold px-2 py-1 rounded bg-white/60 border border-black/10">
-                                    {zone.risk_status}
-                                </span>
-                                <p className="text-xs font-mono mt-1 text-gray-400">Score: {zone.risk_score}</p>
-                            </div>
+                            <span className="text-xs font-bold px-2 py-1 rounded bg-white/50 border">
+                                {zone.risk_score}
+                            </span>
                         </div>
-                        {/* Action Suggestion */}
-                        {zone.risk_status === "CRITICAL" && (
-                            <div className="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded">
-                                🚨 Immediate intervention required
-                            </div>
-                        )}
-                         {zone.risk_status === "HIGH" && (
-                            <div className="mt-2 text-xs text-orange-700 bg-orange-50 p-2 rounded">
-                                ⚠️ Deploy traffic diversion teams
-                            </div>
-                        )}
+                        <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
+                            <p className="text-xs font-medium text-slate-600 flex items-start gap-1">
+                                <span>👉</span> {getActionSuggestion(zone.risk_status)}
+                            </p>
+                        </div>
                     </div>
                 ))}
                 
-                {sortedZones.length === 0 && !loading && (
-                    <div className="text-center text-gray-400 py-10">No zones data</div>
+                {topHotspots.length === 0 && (
+                    <div className="text-center py-10 text-slate-400 text-sm">No critical zones detected.</div>
                 )}
             </div>
         </div>

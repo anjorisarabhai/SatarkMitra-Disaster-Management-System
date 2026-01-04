@@ -4,38 +4,26 @@ const LegendItem = ({ color, label }) => (
   <div className="flex items-center gap-2 mb-1">
     <span
       style={{
-        width: "14px",
-        height: "14px",
+        width: "12px",
+        height: "12px",
         borderRadius: "50%",
         backgroundColor: color,
         display: "inline-block",
-        border: "1px solid #555",
+        border: "1px solid #ccc",
       }}
     />
-    <span>{label}</span>
+    <span className="text-slate-700">{label}</span>
   </div>
 )
 
 export default function DelhiMapLegend() {
   return (
-    <div
-      style={{
-        background: "white",
-        padding: "10px",
-        borderRadius: "8px",
-        fontSize: "13px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        border: "1px solid #ddd",
-      }}
-    >
-      <h4 style={{ fontWeight: 600, marginBottom: "6px" }}>
-        Flood Risk Legend
-      </h4>
-
-      <LegendItem color="green" label="Low Risk" />
-      <LegendItem color="gold" label="Moderate Risk" />
-      <LegendItem color="orange" label="High Risk" />
-      <LegendItem color="red" label="Critical Risk" />
+    <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-md border border-slate-200 text-xs w-32">
+      <h4 className="font-bold text-slate-800 mb-2 border-b pb-1">Risk Levels</h4>
+      <LegendItem color="green" label="Low" />
+      <LegendItem color="gold" label="Moderate" />
+      <LegendItem color="orange" label="High" />
+      <LegendItem color="red" label="Critical" />
     </div>
   )
 }
