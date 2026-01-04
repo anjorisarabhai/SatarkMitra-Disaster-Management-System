@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
+const KedarnathLeafletMap = dynamic(
+  () => import("./KedarnathLeafletMap"),
+  { ssr: false }
+)
 import {
   Activity,
   MapPin,
@@ -153,7 +157,8 @@ const nearbyResources = [
 export default function FloodManagementApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isWorldWindLoaded, setIsWorldWindLoaded] = useState(false);
+  const [kedarnathRisk, setKedarnathRisk] = useState(null)
+
 
   const [alerts, setAlerts] = useState(initialMockAlerts);
   const [contacts, setContacts] = useState(initialEmergencyContacts);
@@ -185,46 +190,6 @@ export default function FloodManagementApp() {
     return () => clearInterval(timer);
   }, []);
   
-  useEffect(() => {
-    if (typeof window === "undefined" || activeTab !== 'dashboard') return;
-    
-    if (typeof window.WorldWind !== "undefined") {
-      setIsWorldWindLoaded(true);
-      return;
-    }
-    
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/@nasaworldwind/worldwind@0.9.0/build/dist/worldwind.min.js";
-    script.async = true;
-    script.onload = () => setIsWorldWindLoaded(true);
-    script.onerror = () => console.error("Failed to load WorldWind");
-    document.head.appendChild(script);
-  }, [activeTab]);
-
-  const initializeWorldWind = (canvasId) => {
-    if (!isWorldWindLoaded) return;
-    const canvas = document.getElementById(canvasId);
-    if (!canvas || canvas.hasAttribute('data-initialized')) return;
-    try {
-      const wwd = new window.WorldWind.WorldWindow(canvasId);
-      canvas.setAttribute('data-initialized', 'true');
-      const layers = [ 
-        new window.WorldWind.BMNGOneImageLayer(), 
-        new window.WorldWind.BingAerialWithLabelsLayer(), 
-        new window.WorldWind.CompassLayer() 
-      ];
-      layers.forEach(layer => wwd.addLayer(layer));
-      wwd.goTo(new window.WorldWind.Position(30.735, 79.066, 15000));
-    } catch (error) { 
-      console.error("WorldWind initialization failed:", error); 
-    }
-  };
-  
-  useEffect(() => {
-    if (activeTab === 'dashboard' && isWorldWindLoaded) { 
-      setTimeout(() => initializeWorldWind('worldwind-canvas'), 100); 
-    }
-  }, [activeTab, isWorldWindLoaded]);
 
   const getStatusClass = (status) => {
     if (status === "critical") return "badge-destructive";
@@ -266,12 +231,19 @@ export default function FloodManagementApp() {
                     <div className="card"><div className="card-header"><h3 className="card-title">Open Shelters</h3><Home className="icon" /></div><div className="card-content"><p className="card-value">{nearbyResources.filter(r => r.status === "Open").length}</p><p className="card-description">{nearbyResources.reduce((acc, r) => r.status === "Open" ? acc + r.capacity : acc, 0)} total capacity</p></div></div>
                 </div>
                 <div className="card map-card">
-                    <div className="card-header"><h3 className="card-title">Interactive Flood Risk Map</h3><p className="card-description">High-risk (red) and low-risk (green) zones.</p></div>
-                    <div className="card-content map-container">
-                        {isWorldWindLoaded ? (<canvas id="worldwind-canvas" style={{width: '100%', height: '100%'}} />) : (<div className="loading-overlay"><div className="spinner"></div><p>Loading 3D Map...</p></div>)}
-                    </div>
-                </div>
-            </div>
+                 <div className="card-header">
+                  <h3 className="card-title">Kedarnath Flood Risk Map</h3>
+                  <p className="card-description">
+              Real‑time AI‑assessed flood risk visualization
+              </p>
+             </div>
+
+             <div className="card-content" style={{ height: "400px" }}>
+                <KedarnathLeafletMap riskData={kedarnathRisk} />
+             </div>
+             </div>
+             </div>
+             </div>
           )}
 
           {activeTab === 'water-levels' && (

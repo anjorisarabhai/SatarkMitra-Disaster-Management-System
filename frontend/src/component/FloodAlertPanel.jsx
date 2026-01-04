@@ -12,6 +12,10 @@ const FloodAlertPanel = () => {
       alert("Please enter both River Level and Rainfall values.");
       return;
     }
+if (data.status === 'success') {
+  setResult(data)
+  setKedarnathRisk(data)   // 👈 ADD THIS
+}
 
     setLoading(true);
     setResult(null);
