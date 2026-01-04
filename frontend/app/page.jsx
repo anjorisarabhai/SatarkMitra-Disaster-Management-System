@@ -44,6 +44,18 @@ export default function Page() {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
+            {/* small arrow near image (top-right) */}
+            <div className="absolute top-3 right-3 z-20">
+              <svg
+                className="w-4 h-4 text-white opacity-80"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19L19 5M9 5h10v10" />
+              </svg>
+            </div>
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-8">
@@ -60,11 +72,8 @@ export default function Page() {
               </p>
               
               <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
-                <span className="font-semibold text-lg flex items-center gap-2">
-                  Enter Dashboard 
-                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
+                <span className="font-semibold text-lg">
+                  Enter Dashboard
                 </span>
               </div>
             </div>
@@ -82,6 +91,18 @@ export default function Page() {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
+            {/* small arrow near image (top-right) */}
+            <div className="absolute top-3 right-3 z-20">
+              <svg
+                className="w-4 h-4 text-white opacity-80"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19L19 5M9 5h10v10" />
+              </svg>
+            </div>
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-8">
@@ -98,11 +119,8 @@ export default function Page() {
               </p>
               
               <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
-                <span className="font-semibold text-lg flex items-center gap-2">
-                  Enter Dashboard 
-                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
+                <span className="font-semibold text-lg">
+                  Enter Dashboard
                 </span>
               </div>
             </div>
