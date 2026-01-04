@@ -10,7 +10,7 @@ const DelhiPanel = dynamic(() => import("../src/component/DelhiPanel"), {
 })
 
 export default function Page() {
-  const [region, setRegion] = useState<"kedarnath" | "delhi" | null>(null)
+  const [region, setRegion] = useState(null)
 
   /* ===============================
      🌍 FULL‑SCREEN REGION SELECT
@@ -44,23 +44,6 @@ export default function Page() {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
-            {/* tiny arrow in top-right over image */}
-            <div className="absolute top-3 right-3 z-20 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white opacity-80"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 19L19 5M9 5h10v10"
-                />
-              </svg>
-            </div>
-
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-8">
@@ -76,11 +59,9 @@ export default function Page() {
                 AI-driven river flood prediction, early warnings & emergency response
               </p>
               
-              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
-                <span className="font-semibold text-lg">
-                  Enter Dashboard
-                </span>
-              </div>
+              <button className="px-8 py-4 bg-blue-600 border-2 border-blue-500 rounded-full hover:bg-blue-500 hover:border-blue-400 hover:scale-110 transition-all duration-300 shadow-2xl text-white font-semibold text-lg">
+                Enter Dashboard
+              </button>
             </div>
           </div>
 
@@ -95,23 +76,6 @@ export default function Page() {
               alt="Delhi Water Logging"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
-
-            {/* tiny arrow in top-right over image */}
-            <div className="absolute top-3 right-3 z-20 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white opacity-80"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 19L19 5M9 5h10v10"
-                />
-              </svg>
-            </div>
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
@@ -128,11 +92,9 @@ export default function Page() {
                 Zone-wise hotspot mapping with live & simulated rainfall scenarios
               </p>
               
-              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
-                <span className="font-semibold text-lg">
-                  Enter Dashboard
-                </span>
-              </div>
+              <button className="px-8 py-4 bg-purple-600 border-2 border-purple-500 rounded-full hover:bg-purple-500 hover:border-purple-400 hover:scale-110 transition-all duration-300 shadow-2xl text-white font-semibold text-lg">
+                Enter Dashboard
+              </button>
             </div>
           </div>
 
