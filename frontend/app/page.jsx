@@ -17,67 +17,94 @@ export default function Page() {
      =============================== */
   if (!region) {
     return (
-      <div className="h-screen w-screen flex flex-col">
+      <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
         
-        {/* 🔥 HEADING */}
-        <div className="h-[12vh] flex items-center justify-center border-b">
-          <h1 className="text-4xl font-bold">
-            Disaster Management System
-          </h1>
+        {/* HEADING */}
+        <div className="flex-shrink-0 h-[15vh] flex items-center justify-center border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+          <div className="text-center">
+            <h1 className="text-5xl font-bold text-white mb-2 tracking-tight">
+              Disaster Management System
+            </h1>
+            <p className="text-slate-300 text-lg">Real-time monitoring & AI-powered predictions</p>
+          </div>
         </div>
 
-        {/* 🔥 SPLIT SECTIONS */}
-        <div className="h-[88vh] flex">
+        {/* SPLIT SECTIONS */}
+        <div className="flex-1 flex min-h-0">
 
           {/* 🏔 KEDARNATH */}
           <div
             onClick={() => setRegion("kedarnath")}
-            className="relative w-1/2 h-full cursor-pointer group overflow-hidden"
+            className="relative flex-1 cursor-pointer group overflow-hidden transition-all duration-500 hover:flex-[1.05]"
+            style={{ minWidth: 0 }}
           >
             <img
               src="/images/kedarnath.jpg"
               alt="Kedarnath Floods"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
-            <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
-            <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-6">
-              <h2 className="text-4xl font-bold mb-3">
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-8">
+              <div className="bg-blue-500/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4 border border-blue-400/30">
+                <span className="text-blue-300 text-sm font-semibold">RIVER FLOOD MONITORING</span>
+              </div>
+              
+              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg">
                 Kedarnath Floods
               </h2>
-              <p className="text-lg max-w-md mb-6">
-                AI‑driven river flood prediction, early warnings & emergency response
+              
+              <p className="text-xl max-w-md mb-8 text-slate-200 leading-relaxed">
+                AI-driven river flood prediction, early warnings & emergency response
               </p>
-              <span className="px-6 py-3 border border-white rounded-full">
-                Enter Dashboard →
-              </span>
+              
+              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
+                <span className="font-semibold text-lg flex items-center gap-2">
+                  Enter Dashboard 
+                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
           {/* 🌧 DELHI */}
           <div
             onClick={() => setRegion("delhi")}
-            className="relative w-1/2 h-full cursor-pointer group overflow-hidden"
+            className="relative flex-1 cursor-pointer group overflow-hidden border-l-2 border-slate-700/50 transition-all duration-500 hover:flex-[1.05]"
+            style={{ minWidth: 0 }}
           >
             <img
               src="/images/delhi.jpg"
               alt="Delhi Water Logging"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
-            <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/20 transition-all duration-500" />
 
-            <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-6">
-              <h2 className="text-4xl font-bold mb-3">
-                Delhi Water‑Logging
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-white text-center px-8">
+              <div className="bg-purple-500/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4 border border-purple-400/30">
+                <span className="text-purple-300 text-sm font-semibold">URBAN FLOOD TRACKING</span>
+              </div>
+              
+              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg">
+                Delhi Water-Logging
               </h2>
-              <p className="text-lg max-w-md mb-6">
-                Zone‑wise hotspot mapping with live & simulated rainfall scenarios
+              
+              <p className="text-xl max-w-md mb-8 text-slate-200 leading-relaxed">
+                Zone-wise hotspot mapping with live & simulated rainfall scenarios
               </p>
-              <span className="px-6 py-3 border border-white rounded-full">
-                Enter Dashboard →
-              </span>
+              
+              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
+                <span className="font-semibold text-lg flex items-center gap-2">
+                  Enter Dashboard 
+                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
