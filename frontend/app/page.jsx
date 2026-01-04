@@ -10,7 +10,7 @@ const DelhiPanel = dynamic(() => import("../src/component/DelhiPanel"), {
 })
 
 export default function Page() {
-  const [region, setRegion] = useState(null)
+  const [region, setRegion] = useState<"kedarnath" | "delhi" | null>(null)
 
   /* ===============================
      🌍 FULL‑SCREEN REGION SELECT
@@ -44,15 +44,20 @@ export default function Page() {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
-            {/* small arrow near image (top-right) */}
-            <div className="absolute top-3 right-3 z-20">
+            {/* tiny arrow in top-right over image */}
+            <div className="absolute top-3 right-3 z-20 flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-white opacity-80"
+                className="w-5 h-5 text-white opacity-80"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19L19 5M9 5h10v10" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 19L19 5M9 5h10v10"
+                />
               </svg>
             </div>
 
@@ -91,15 +96,20 @@ export default function Page() {
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
 
-            {/* small arrow near image (top-right) */}
-            <div className="absolute top-3 right-3 z-20">
+            {/* tiny arrow in top-right over image */}
+            <div className="absolute top-3 right-3 z-20 flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-white opacity-80"
+                className="w-5 h-5 text-white opacity-80"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19L19 5M9 5h10v10" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 19L19 5M9 5h10v10"
+                />
               </svg>
             </div>
 
