@@ -51,16 +51,22 @@ export default function Page() {
                 <span className="text-blue-300 text-sm font-semibold">RIVER FLOOD MONITORING</span>
               </div>
               
-              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg flex items-center gap-3">
+              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg">
                 Kedarnath Floods
-                <svg className="w-10 h-10 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
               </h2>
               
-              <p className="text-xl max-w-md text-slate-200 leading-relaxed">
+              <p className="text-xl max-w-md mb-8 text-slate-200 leading-relaxed">
                 AI-driven river flood prediction, early warnings & emergency response
               </p>
+              
+              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
+                <span className="font-semibold text-lg flex items-center gap-2">
+                  Enter Dashboard 
+                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -83,16 +89,22 @@ export default function Page() {
                 <span className="text-purple-300 text-sm font-semibold">URBAN FLOOD TRACKING</span>
               </div>
               
-              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg flex items-center gap-3">
+              <h2 className="text-5xl font-bold mb-4 tracking-tight drop-shadow-lg">
                 Delhi Water-Logging
-                <svg className="w-10 h-10 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
               </h2>
               
-              <p className="text-xl max-w-md text-slate-200 leading-relaxed">
+              <p className="text-xl max-w-md mb-8 text-slate-200 leading-relaxed">
                 Zone-wise hotspot mapping with live & simulated rainfall scenarios
               </p>
+              
+              <div className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 group/btn">
+                <span className="font-semibold text-lg flex items-center gap-2">
+                  Enter Dashboard 
+                  <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
