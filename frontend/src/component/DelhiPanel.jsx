@@ -22,7 +22,7 @@ export default function DelhiPanel() {
   const [cityWeather, setCityWeather] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // 🌧️ USP FEATURE: Rainfall Simulation
+  // 🌧️ Rainfall Simulation
   const [simulatedRain, setSimulatedRain] = useState(0)
 
   // 🎬 Time‑lapse
@@ -81,18 +81,12 @@ export default function DelhiPanel() {
     .sort((a, b) => b.risk_score - a.risk_score)
     .slice(0, 5)
 
-  // 🚨 Action Suggestions
-  const getActionSuggestion = (risk) => {
-    switch (risk) {
-      case "CRITICAL":
-        return "🚨 Immediate intervention, road closure & pumps required"
-      case "HIGH":
-        return "⚠️ Traffic diversion & emergency teams on standby"
-      case "MODERATE":
-        return "🛠️ Clear drains & monitor closely"
-      default:
-        return "✅ Monitor only"
-    }
+  // 🚨 Authority Action Suggestions
+  const getActionText = (risk) => {
+    if (risk === "CRITICAL") return "🚨 Emergency response required"
+    if (risk === "HIGH") return "🧹 Deploy pumps & drain cleanup"
+    if (risk === "MODERATE") return "🔍 Inspect drainage systems"
+    return "✅ Monitoring only"
   }
 
   const getRiskIcon = (status) => {
@@ -108,9 +102,14 @@ export default function DelhiPanel() {
         <CloudRain /> Delhi Water‑Logging Decision Dashboard
       </h3>
 
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-600 mb-3">
         Zone‑wise flood risk with predictive rainfall simulation
       </p>
+
+      {/* 🧭 SHELTER INFO NOTE */}
+      <div className="mb-4 p-3 bg-green-50 border rounded text-sm">
+        🧭 Nearest emergency shelters are marked on the map for quick evacuation guidance.
+      </div>
 
       {/* 🌧️ WHAT‑IF + 🎬 TIMELAPSE */}
       <div className="mb-4 p-4 rounded border bg-blue-50">
@@ -145,33 +144,50 @@ export default function DelhiPanel() {
       </div>
 
       {/* 🔥 TOP‑5 HOTSPOTS */}
-      <div className="mb-6">
-        <h4 className="font-semibold mb-2">🚨 Top‑5 Most Dangerous Hotspots</h4>
-        <ol className="list-decimal pl-5 space-y-1">
-          {topHotspots.map((z, i) => (
-            <li key={i}>
-              <b>{z.zone_name}</b> — {z.risk_status} ({z.risk_score})
-            </li>
-          ))}
-        </ol>
+      <div className="mb-6 p-3 bg-red-50 border rounded">
+        <h4 className="font-semibold mb-2">🚨 Highest Risk Right Now</h4>
+        {topHotspots.map((z, i) => (
+          <p key={i} className="text-sm">
+            {i + 1}. <b>{z.zone_name}</b> — {z.risk_status} ({z.risk_score})
+          </p>
+        ))}
       </div>
 
-      {/* 🚨 ACTION SUGGESTIONS */}
+      {/* 🚨 ZONE ACTION + ADVISORY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {simulatedZones.map((zone, i) => (
-          <div key={i} className="p-3 rounded border">
-            <h4 className="font-semibold flex items-center gap-2">
-              <MapPin size={14} /> {zone.zone_name}
-            </h4>
-            <p className="flex items-center gap-2">
-              {getRiskIcon(zone.risk_status)}
-              <b>{zone.risk_status}</b>
-            </p>
-            <p className="text-sm mt-1">
-              {getActionSuggestion(zone.risk_status)}
-            </p>
-          </div>
-        ))}
+        {simulatedZones.map((zone, i) => {
+          const preparedness = Math.max(0, 100 - zone.risk_score)
+
+          return (
+            <div key={i} className="p-3 rounded border">
+              <h4 className="font-semibold flex items-center gap-2">
+                <MapPin size={14} /> {zone.zone_name}
+              </h4>
+
+              <p className="flex items-center gap-2">
+                {getRiskIcon(zone.risk_status)}
+                <b>{zone.risk_status}</b>
+              </p>
+
+              {/* 🚨 Travel Advisory */}
+              {zone.risk_status !== "LOW" && (
+                <p className="text-xs mt-1 text-red-600">
+                  ⚠ Possible traffic disruption in this area
+                </p>
+              )}
+
+              {/* 🧹 Authority Action */}
+              <p className="text-xs mt-2 font-medium">
+                {getActionText(zone.risk_status)}
+              </p>
+
+              {/* 🧠 Preparedness Score */}
+              <p className="text-xs mt-1 text-gray-600">
+                🧠 Preparedness: {preparedness}%
+              </p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
