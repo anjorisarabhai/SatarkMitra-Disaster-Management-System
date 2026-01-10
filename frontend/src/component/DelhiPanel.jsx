@@ -1,25 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   CloudRain,
   AlertTriangle,
   Check,
   MapPin,
   Play,
-  Pause
+  Pause,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import DelhiMapLegend from "./DelhiMapLegend"
 
-const DelhiHotspotMap = dynamic(
-  () => import("./DelhiHotspotMap"),
-  { ssr: false }
-)
+const DelhiHotspotMap = dynamic(() => import("./DelhiHotspotMap"), { ssr: false })
 
 export default function DelhiPanel() {
   const [zones, setZones] = useState([])
-  const [cityWeather, setCityWeather] = useState(null)
   const [loading, setLoading] = useState(false)
 
   // 🌧️ Rainfall Simulation
@@ -28,16 +24,28 @@ export default function DelhiPanel() {
   // 🎬 Time‑lapse
   const [playing, setPlaying] = useState(false)
 
+  // 👤 / 🏛 View Mode
+  const [viewMode, setViewMode] = useState("citizen")
+
+  // 🗣 Citizen Reports
+  const [reports, setReports] = useState([])
+  const [reportText, setReportText] = useState("")
+  const [reportLoading, setReportLoading] = useState(false)
+
+  // 📍 Card scroll refs
+  const cardRefs = useRef({})
+
+  // 📅 Fake rainfall forecast (prototype)
+  const forecast = [5, 12, 20, 35, 30]
+
   const fetchDelhiHotspots = async () => {
     setLoading(true)
     try {
       const res = await fetch("http://127.0.0.1:8000/api/predict_delhi")
       if (!res.ok) throw new Error("Server error")
-
       const data = await res.json()
       if (data.status === "success") {
         setZones(data.zones_data || [])
-        setCityWeather(data.city_weather || null)
       }
     } catch {
       alert("Backend not reachable")
@@ -76,12 +84,12 @@ export default function DelhiPanel() {
 
   const simulatedZones = zones.map(applyRainSimulation)
 
-  // 🔥 TOP‑5 DANGEROUS HOTSPOTS
+  // 🔥 TOP‑5 HOTSPOTS
   const topHotspots = [...simulatedZones]
     .sort((a, b) => b.risk_score - a.risk_score)
     .slice(0, 5)
 
-  // 🚨 Authority Action Suggestions
+  // 🏛 Authority Actions
   const getActionText = (risk) => {
     if (risk === "CRITICAL") return "🚨 Emergency response required"
     if (risk === "HIGH") return "🧹 Deploy pumps & drain cleanup"
@@ -96,22 +104,99 @@ export default function DelhiPanel() {
     return <Check className="text-green-600" />
   }
 
+  // ✅ Citizen report using GPS location
+  const submitCitizenReport = () => {
+    if (!reportText) return
+
+    if (!navigator.geolocation) {
+      alert("Location not supported on this device")
+      return
+    }
+
+    setReportLoading(true)
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+
+        setReports((prev) => [
+          ...prev,
+          { lat: latitude, lng: longitude, note: reportText },
+        ])
+
+        setReportText("")
+        setReportLoading(false)
+      },
+      () => {
+        alert("Location permission denied. Please allow location access.")
+        setReportLoading(false)
+      }
+    )
+  }
+
   return (
     <div className="card max-w-6xl mx-auto p-4">
-      <h3 className="card-title flex gap-2 items-center mb-2">
+
+      {/* TITLE */}
+      <h3 className="card-title flex gap-2 items-center mb-1">
         <CloudRain /> Delhi Water‑Logging Decision Dashboard
       </h3>
 
-      <p className="text-sm text-gray-600 mb-3">
-        Zone‑wise flood risk with predictive rainfall simulation
-      </p>
+      {/* 👤 / 🏛 VIEW MODE */}
+      <div className="mb-3 flex gap-2 text-xs">
+        <span
+          className={`px-3 py-1 rounded-full cursor-pointer ${
+            viewMode === "citizen" ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setViewMode("citizen")}
+        >
+          👤 Citizen View
+        </span>
 
-      {/* 🧭 SHELTER INFO NOTE */}
-      <div className="mb-4 p-3 bg-green-50 border rounded text-sm">
-        🧭 Nearest emergency shelters are marked on the map for quick evacuation guidance.
+        <span
+          className={`px-3 py-1 rounded-full cursor-pointer ${
+            viewMode === "authority" ? "bg-red-600 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setViewMode("authority")}
+        >
+          🏛 Authority View
+        </span>
       </div>
 
-      {/* 🌧️ WHAT‑IF + 🎬 TIMELAPSE */}
+      {/* 📅 FORECAST MINI GRAPH */}
+      <div className="mb-6">
+        <h4 className="font-semibold mb-2">📅 Rainfall Trend (Next Hours)</h4>
+        <div className="flex items-end gap-2 h-20">
+          {forecast.map((v, i) => (
+            <div
+              key={i}
+              style={{ height: `${v * 2}px` }}
+              className="w-6 bg-blue-500 rounded"
+              title={`${v} mm`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 🗣 CITIZEN REPORT */}
+      <div className="mb-6 p-3 border rounded bg-gray-50">
+        <h4 className="font-semibold mb-2">🗣 Report Water‑Logging</h4>
+        <input
+          className="border p-2 text-sm w-full mb-2"
+          placeholder="Describe location (near metro, market, road name...)"
+          value={reportText}
+          onChange={(e) => setReportText(e.target.value)}
+        />
+        <button
+          className="btn btn-sm"
+          disabled={reportLoading}
+          onClick={submitCitizenReport}
+        >
+          {reportLoading ? "Detecting location..." : "Submit Report"}
+        </button>
+      </div>
+
+      {/* 🌧️ RAIN SIMULATION */}
       <div className="mb-4 p-4 rounded border bg-blue-50">
         <p className="font-semibold mb-2">
           🌧️ Rainfall Simulation: <b>{simulatedRain} mm/hr</b>
@@ -137,13 +222,19 @@ export default function DelhiPanel() {
 
       {/* 🗺️ MAP */}
       <div className="relative mb-6">
-        <DelhiHotspotMap zones={simulatedZones} />
+        <DelhiHotspotMap
+          zones={simulatedZones}
+          reports={reports}
+          onZoneClick={(name) => {
+            cardRefs.current[name]?.scrollIntoView({ behavior: "smooth" })
+          }}
+        />
         <div className="absolute bottom-4 left-4 z-[1000]">
           <DelhiMapLegend />
         </div>
       </div>
 
-      {/* 🔥 TOP‑5 HOTSPOTS */}
+      {/* 🔥 TOP‑5 */}
       <div className="mb-6 p-3 bg-red-50 border rounded">
         <h4 className="font-semibold mb-2">🚨 Highest Risk Right Now</h4>
         {topHotspots.map((z, i) => (
@@ -153,13 +244,17 @@ export default function DelhiPanel() {
         ))}
       </div>
 
-      {/* 🚨 ZONE ACTION + ADVISORY CARDS */}
+      {/* 🚨 ACTION CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {simulatedZones.map((zone, i) => {
           const preparedness = Math.max(0, 100 - zone.risk_score)
 
           return (
-            <div key={i} className="p-3 rounded border">
+            <div
+              key={i}
+              ref={(el) => (cardRefs.current[zone.zone_name] = el)}
+              className="p-3 rounded border"
+            >
               <h4 className="font-semibold flex items-center gap-2">
                 <MapPin size={14} /> {zone.zone_name}
               </h4>
@@ -169,19 +264,21 @@ export default function DelhiPanel() {
                 <b>{zone.risk_status}</b>
               </p>
 
-              {/* 🚨 Travel Advisory */}
+              {/* 🚗 Travel Advisory */}
               {zone.risk_status !== "LOW" && (
                 <p className="text-xs mt-1 text-red-600">
                   ⚠ Possible traffic disruption in this area
                 </p>
               )}
 
-              {/* 🧹 Authority Action */}
-              <p className="text-xs mt-2 font-medium">
-                {getActionText(zone.risk_status)}
-              </p>
+              {/* 🏛 Authority Action */}
+              {viewMode === "authority" && (
+                <p className="text-xs mt-2 font-medium">
+                  {getActionText(zone.risk_status)}
+                </p>
+              )}
 
-              {/* 🧠 Preparedness Score */}
+              {/* 🧠 Preparedness */}
               <p className="text-xs mt-1 text-gray-600">
                 🧠 Preparedness: {preparedness}%
               </p>
