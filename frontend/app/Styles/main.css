@@ -3,16 +3,32 @@
  * Imports all CSS partials in the correct order.
 */
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* =========================================
+   🚨 CRITICAL: TAILWIND LOADS HERE
+   ========================================= */
 
 /* Import all partials */
-/*@import url('./global.css');*/
-@import url('./_variables.css');
-@import url('./_base.css');
-@import url('./_layout.css');
-@import url('./_components.css');
-@import url('./_animations.css');
+/*@import url('./global.css');*/ /* <--- You can keep this commented out or delete it */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Custom CSS layers (Tailwind v4 correct) ---- */
+@layer base {
+  @import "./_variables.css";
+  @import "./_base.css";
+}
+
+@layer components {
+  @import "./_layout.css";
+  @import "./_components.css";
+}
+
+@layer utilities {
+  @import "./_animations.css";
+}
+
+/* ... KEEP THE REST OF YOUR FILE THE SAME BELOW THIS POINT ... */
 
 /* PERFORMANCE OPTIMIZATIONS */
 .card,

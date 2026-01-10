@@ -1,4 +1,3 @@
-import "./global.css";
 import "./Styles/main.css";
 import "leaflet/dist/leaflet.css";
 
