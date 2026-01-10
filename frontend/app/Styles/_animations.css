@@ -274,3 +274,11 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Motion safety */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
