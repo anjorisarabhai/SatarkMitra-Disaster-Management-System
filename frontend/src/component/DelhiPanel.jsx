@@ -637,7 +637,11 @@ export default function DelhiPanel() {
                       placeholder="Describe the location (near metro, market, road name...)"
                       value={reportText}
                       onChange={(e) => setReportText(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 
+                      text-slate-900 bg-white 
+                      placeholder:text-slate-400
+                      focus:border-purple-500 focus:ring-2 focus:ring-purple-200 
+                      outline-none transition-all"
                     />
                   </div>
                   <button

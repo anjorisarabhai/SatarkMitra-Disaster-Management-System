@@ -311,6 +311,34 @@ def home():
 def health():
     return jsonify({"status": "ok"})
 
+@app.route("/api/weather_by_location", methods=["GET"])
+def weather_by_location():
+    lat = request.args.get("lat")
+    lon = request.args.get("lon")
+
+    if not lat or not lon:
+        return jsonify({"status": "error", "message": "Location missing"}), 400
+
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather"
+        f"?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+    )
+
+    res = requests.get(url, timeout=5)
+    data = res.json()
+
+    return jsonify({
+        "status": "success",
+        "weather": {
+            "temperature": data["main"]["temp"],
+            "humidity": data["main"]["humidity"],
+            "rain_1h": data.get("rain", {}).get("1h", 0),
+            "description": data["weather"][0]["description"]
+        }
+    })
+
+
+
 # =====================================================
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
