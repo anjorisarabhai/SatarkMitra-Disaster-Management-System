@@ -9,3 +9,9 @@ frontend/.next/
 
 # OS
 .DS_Store
+
+# Environment variables
+.env
+
+# ML models
+backend/ml_models/*.pkl
