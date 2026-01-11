@@ -22,6 +22,8 @@ import {
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import DelhiMapLegend from "./DelhiMapLegend"
+import Image from "next/image"
+
 
 // Pass lang prop to the map
 const DelhiHotspotMap = dynamic(() => import("./DelhiHotspotMap"), { ssr: false })
@@ -430,57 +432,62 @@ export default function DelhiPanel() {
   const lowCount = simulatedZones.filter((z) => z.risk_status === "LOW").length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-              <Droplets className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">{text.title}</h1>
-              <p className="text-sm text-slate-500">{text.subtitle}</p>
-            </div>
-          </div>
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    {/* Header */}
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="w-full px-6 py-4 flex items-center justify-between">
 
+          {/* Logo + Title */}
           <div className="flex items-center gap-4">
-            {/* Language Toggle */}
-            <div className="flex bg-slate-100 rounded-full p-1 border border-slate-200">
-                <button 
-                  onClick={() => setLang("en")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'en' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
-                >
-                    ENG
-                </button>
-                <button 
-                  onClick={() => setLang("hi")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'hi' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500'}`}
-                >
-                    हिंदी
-                </button>
+            {/* Logo */}
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-lg flex items-center justify-center">
+              <Image 
+                src="/images/logo.jpg"
+                alt="SatarkMitra Logo"
+                width={48}
+                height={48}
+                className="object-contain"
+                priority
+              />
             </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
-              <button
-                onClick={() => setViewMode("citizen")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  viewMode === "citizen" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                {text.citizen}
-              </button>
-              <button
-                onClick={() => setViewMode("authority")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  viewMode === "authority" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                <Building2 className="w-4 h-4" />
-                {text.authority}
-              </button>
+            <div className="flex items-center gap-4">
+              {/* Language Toggle */}
+              <div className="flex bg-slate-100 rounded-full p-1 border border-slate-200">
+                  <button 
+                    onClick={() => setLang("en")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'en' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
+                  >
+                      ENG
+                  </button>
+                  <button 
+                    onClick={() => setLang("hi")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'hi' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500'}`}
+                  >
+                      हिंदी
+                  </button>
+              </div>
+  
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+                <button
+                  onClick={() => setViewMode("citizen")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    viewMode === "citizen" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  {text.citizen}
+                </button>
+                <button
+                  onClick={() => setViewMode("authority")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    viewMode === "authority" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  {text.authority}
+                </button>
+              </div>
             </div>
           </div>
         </div>
