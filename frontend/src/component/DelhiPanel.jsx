@@ -146,6 +146,32 @@ export default function DelhiPanel() {
     return () => clearInterval(interval)
   }, [playing])
 
+  useEffect(() => {
+    if (!navigator.geolocation) return
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+
+        try {
+          const res = await fetch(
+            `http://127.0.0.1:8000/api/weather_by_location?lat=${latitude}&lon=${longitude}`
+          )
+          const data = await res.json()
+          if (data.status === "success") {
+            setWeather(data.weather)
+          }
+        } catch (err) {
+          console.error("Weather fetch failed", err)
+        }
+      },
+      () => {
+        console.warn("Location permission denied")
+      }
+    )
+  }, [])
+
+
   const applyRainSimulation = (zone) => {
     let score = zone.risk_score
     if (simulatedRain > 40) score += 40
@@ -169,6 +195,13 @@ export default function DelhiPanel() {
     if (risk === "MODERATE") return "Inspect drainage systems"
     return "Monitoring only"
   }
+  const getTravelCaution = (risk) => {
+  if (risk === "CRITICAL") return "🚫 Avoid travel. Severe water-logging expected."
+  if (risk === "HIGH") return "⚠️ Travel only if necessary. Expect disruptions."
+  if (risk === "MODERATE") return "🟡 Delays possible. Drive with caution."
+  return "✅ Safe for travel."
+  }
+
 
   const getBadgeStyles = (status) => {
     const styles = {
@@ -724,6 +757,17 @@ export default function DelhiPanel() {
                               <p className="text-sm font-semibold text-blue-700">{getActionText(zone.risk_status)}</p>
                             </div>
                           )}
+                          {viewMode === "citizen" && (
+                            <div className="pt-3 mt-3 border-t border-slate-200">
+                              <p className="text-xs font-medium text-slate-500 mb-1">
+                                Travel Advisory
+                              </p>
+                              <p className="text-sm font-semibold text-red-600">
+                                {getTravelCaution(zone.risk_status)}
+                              </p>
+                            </div>
+                          )}
+
                         </div>
                       </div>
                     ))}
