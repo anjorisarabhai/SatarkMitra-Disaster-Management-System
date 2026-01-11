@@ -1,52 +1,30 @@
 "use client"
 
-const LegendItem = ({ color, label }) => (
-  <div className="flex items-center gap-2 mb-1">
-    <span
-      style={{
-        width: "14px",
-        height: "14px",
-        borderRadius: "50%",
-        backgroundColor: color,
-        display: "inline-block",
-        border: "1px solid #555",
-      }}
-    />
-    <span>{label}</span>
-  </div>
-)
-
-export default function DelhiMapLegend() {
+function LegendItem({ color, label }) {
   return (
-    <div
-      style={{
-        background: "white",
-        padding: "10px",
-        borderRadius: "8px",
-        fontSize: "13px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        border: "1px solid #ddd",
-        minWidth: "180px",
-      }}
-    >
-      <h4 style={{ fontWeight: 600, marginBottom: "6px" }}>
-        Map Legend
-      </h4>
+    <div className="flex items-center gap-2">
+      <span className="w-3 h-3 rounded-full flex-shrink-0 border border-black/10" style={{ backgroundColor: color }} />
+      <span className="text-xs text-slate-600">{label}</span>
+    </div>
+  )
+}
 
-      {/* 🔴🟠🟡🟢 Risk Levels */}
-      <LegendItem color="green" label="Low Risk Zone" />
-      <LegendItem color="gold" label="Moderate Risk Zone" />
-      <LegendItem color="orange" label="High Risk Zone" />
-      <LegendItem color="red" label="Critical Risk Zone" />
+export default function DelhiMapLegend({ className = "" }) {
+  return (
+    <div className={`bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-slate-200 ${className}`}>
+      <h4 className="text-sm font-semibold text-slate-800 mb-2">Map Legend</h4>
 
-      {/* Divider */}
-      <div style={{ borderTop: "1px solid #eee", margin: "6px 0" }} />
+      <div className="flex flex-col gap-1.5">
+        <LegendItem color="#22c55e" label="Low Risk Zone" />
+        <LegendItem color="#eab308" label="Moderate Risk Zone" />
+        <LegendItem color="#f97316" label="High Risk Zone" />
+        <LegendItem color="#ef4444" label="Critical Risk Zone" />
 
-      {/* 🔵 Shelters */}
-      <LegendItem color="blue" label="Emergency Shelter / Safe Zone" />
+        <div className="h-px bg-slate-200 my-1.5" />
 
-      {/* 🟣 Citizen Reports */}
-      <LegendItem color="#9d07de" label="Citizen Reported Flood Spot" />
+        <LegendItem color="#3b82f6" label="Emergency Shelter" />
+        <LegendItem color="#a855f7" label="Citizen Report" />
+      </div>
     </div>
   )
 }

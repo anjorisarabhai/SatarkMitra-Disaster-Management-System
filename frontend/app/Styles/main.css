@@ -55,8 +55,7 @@ body {
   }
   
   body {
-    background: white;
-    color: black;
+  background: transparent;
   }
   
   .card {

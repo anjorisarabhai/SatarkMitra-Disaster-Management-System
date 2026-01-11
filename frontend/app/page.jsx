@@ -64,7 +64,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-sky-100 text-slate-100">
       <AnimatePresence mode="wait">
         {/* ================= LANDING PAGE ================= */}
         {!region && (
