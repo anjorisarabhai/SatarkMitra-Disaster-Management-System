@@ -380,16 +380,13 @@ body {
 .tab-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border: none;
-  background: transparent;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
+  gap: 10px;
+  padding: 14px 28px;   /* BIGGER */
+  border-radius: 14px;
+  font-size: 1rem;      /* Bigger text */
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 
 .tab-trigger:hover {
@@ -400,7 +397,8 @@ body {
 .tab-trigger.active {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+  transform: scale(1.05);
 }
 
 .tab-trigger .icon {

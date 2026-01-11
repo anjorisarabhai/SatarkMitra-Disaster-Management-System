@@ -27,6 +27,7 @@ const DelhiHotspotMap = dynamic(() => import("./DelhiHotspotMap"), { ssr: false 
 
 export default function DelhiPanel() {
   const [zones, setZones] = useState([])
+  const [weather, setWeather] = useState(null)
   const [loading, setLoading] = useState(false)
   const [simulatedRain, setSimulatedRain] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -60,6 +61,7 @@ export default function DelhiPanel() {
       const data = await res.json()
       if (data.status === "success") {
         setZones(data.zones_data || [])
+        setWeather(data.city_weather || null) 
       }
     } catch {
       setZones([
@@ -321,28 +323,65 @@ export default function DelhiPanel() {
           </div>
         </div>
 
+        {/* Live Weather Info */}
+        {weather && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Weather</p>
+              <p className="text-lg font-semibold text-slate-800 capitalize">
+                {weather.description}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Rain (last 1h)</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {weather.rain_1h} mm
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Temperature</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {weather.temperature} °C
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+              <p className="text-xs font-medium text-slate-500">Humidity</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {weather.humidity} %
+              </p>
+            </div>
+          </div>
+        )}
+
+
         {/* Tabs Navigation */}
         <div className="flex justify-center">
-          <div className="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-sm border border-slate-200">
+          <div className="inline-flex items-center gap-2 bg-white rounded-2xl p-2 shadow-md border border-slate-200">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 px-7 py-3 rounded-xl text-base font-semibold
+                  transition-all duration-300 ease-out
+                  ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white shadow-lg scale-105"
+                      : "text-slate-700 hover:bg-slate-100 hover:scale-[1.02]"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-5 h-5" />
                   <span>{tab.label}</span>
                 </button>
               )
             })}
           </div>
         </div>
+
 
         {/* Tab Content */}
         <div className="animate-in fade-in duration-300">
