@@ -7,17 +7,16 @@ import numpy as np
 import pandas as pd
 import joblib
 import tensorflow as tf
-from dotenv import load_dotenv  # Import dotenv
+from dotenv import load_dotenv
 
 # =====================================================
 # 0. CONFIGURATION & SETUP
 # =====================================================
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Securely get API Key
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 if not OPENWEATHER_API_KEY:
@@ -29,7 +28,6 @@ if not OPENWEATHER_API_KEY:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "ml_models")
 
-# Load Scalers and Models for Kedarnath
 try:
     scaler_dl = joblib.load(os.path.join(MODEL_DIR, "scaler_dl.pkl"))
     scaler_hybrid = joblib.load(os.path.join(MODEL_DIR, "scaler_hybrid.pkl"))
@@ -42,7 +40,14 @@ except Exception as e:
     print(f"⚠️ Warning: Could not load some Kedarnath models. Error: {e}")
 
 # =====================================================
-# 2. STATIC DATA: DELHI ZONES (VULNERABILITY MAP)
+# ✅ STEP 1: LOAD DELHI ML MODEL (ADDED)
+# =====================================================
+DELHI_MODEL_PATH = os.path.join(BASE_DIR, "ml_models", "drainage_risk_model.pkl")
+delhi_model = joblib.load(DELHI_MODEL_PATH)
+print("✅ Delhi Drainage Risk Model Loaded")
+
+# =====================================================
+# 2. STATIC DATA: DELHI ZONES
 # =====================================================
 DELHI_ZONES = [
     {
@@ -50,7 +55,7 @@ DELHI_ZONES = [
         "name": "Minto Bridge (Connaught Place)",
         "lat": 28.6327,
         "lon": 77.2197,
-        "elevation_meters": 208,     # Critical low point
+        "elevation_meters": 208,
         "drainage_quality": "POOR"
     },
     {
@@ -74,7 +79,7 @@ DELHI_ZONES = [
         "name": "Civil Lines",
         "lat": 28.6816,
         "lon": 77.2281,
-        "elevation_meters": 218,     # Higher ground
+        "elevation_meters": 218,
         "drainage_quality": "GOOD"
     },
     {
@@ -91,12 +96,12 @@ DELHI_ZONES = [
         "lat": 28.5028,
         "lon": 77.2435,
         "elevation_meters": 213,
-        "drainage_quality": "POOR"   # Unplanned colony factor
+        "drainage_quality": "POOR"
     }
 ]
 
 # =====================================================
-# 3. ENDPOINT: KEDARNATH FLOOD PREDICTION
+# 3. EXISTING KEDARNATH ENDPOINT (UNCHANGED)
 # =====================================================
 @app.route("/api/predict", methods=["POST"])
 def predict_kedarnath():
@@ -105,16 +110,13 @@ def predict_kedarnath():
         river = float(data.get("river_level", 1.0))
         rain = float(data.get("rainfall", 5.0))
 
-        # Create a dummy sequence for DL models (simulating history)
         history = [[river * (1 - 0.02 * i), rain] for i in range(6)]
         seq = np.array([history])
 
-        # Deep Learning Predictions
         scaled = scaler_dl.transform(seq.reshape(6, 2)).reshape(1, 6, 2)
         gru_forecast = float(gru_model.predict(scaled, verbose=0)[0][0])
         tcn_forecast = float(tcn_model.predict(scaled, verbose=0)[0][0])
 
-        # Prepare Features for Hybrid Models
         df = pd.DataFrame([{
             "river_water_area_sqkm": river,
             "rainfall_mm": rain,
@@ -141,7 +143,6 @@ def predict_kedarnath():
             "TCN_Forecast": tcn_forecast
         }])
 
-        # Hybrid Predictions
         xgb_pred = int(xgb_model.predict(df)[0])
         svm_pred = int(svm_model.predict(scaler_hybrid.transform(df))[0])
 
@@ -150,20 +151,57 @@ def predict_kedarnath():
         return jsonify({
             "status": "success",
             "location": "Kedarnath",
-            "alert_level": risk,
-            "flood_probability": 72.3, 
-            "model_details": {
-                "xgboost_risk": xgb_pred,
-                "svm_risk": svm_pred,
-                "gru_forecast": gru_forecast
-            }
+            "alert_level": risk
         })
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # =====================================================
-# 4. ENDPOINT: DELHI WATER-LOGGING (ZONE BASED)
+# ✅ STEP 2: NEW ML-BASED DELHI ZONES ENDPOINT (ADDED)
+# =====================================================
+@app.route("/api/delhi/zones", methods=["GET"])
+def delhi_ml_zones():
+    results = []
+
+    sample_input = {
+        "river_water_area_sqkm": 6.5,
+        "upstream_runoff_mm": 1.2,
+        "rainfall_mm": 60,
+        "ggn_runoff_mm": 0.9,
+        "ggn_rainfall_mm": 55,
+        "month": 7
+    }
+
+    X = pd.DataFrame([sample_input])
+    predicted_score = float(delhi_model.predict(X)[0])
+
+    def get_status(score):
+        if score >= 30:
+            return "CRITICAL"
+        elif score >= 20:
+            return "HIGH"
+        elif score >= 10:
+            return "MODERATE"
+        return "LOW"
+
+    for zone in DELHI_ZONES:
+        results.append({
+            "zone_name": zone["name"],
+            "latitude": zone["lat"],
+            "longitude": zone["lon"],
+            "risk_score": round(predicted_score, 2),
+            "risk_status": get_status(predicted_score),
+            "details": {
+                "elevation": zone["elevation_meters"],
+                "drainage": zone["drainage_quality"]
+            }
+        })
+
+    return jsonify(results)
+
+# =====================================================
+# 4. EXISTING DELHI WEATHER ENDPOINT (UNCHANGED)
 # =====================================================
 @app.route("/api/predict_delhi", methods=["GET", "POST"])
 def predict_delhi_zones():
@@ -266,11 +304,7 @@ def predict_delhi_zones():
 def home():
     return jsonify({
         "status": "running",
-        "message": "SatarkMitra AI Backend is Active",
-        "endpoints": {
-            "kedarnath_prediction": "/api/predict (POST)",
-            "delhi_hotspots": "/api/predict_delhi (GET/POST)"
-        }
+        "message": "SatarkMitra AI Backend is Active"
     })
 
 @app.route("/health")

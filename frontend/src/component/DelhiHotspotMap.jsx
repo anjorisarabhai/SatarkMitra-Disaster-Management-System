@@ -3,6 +3,9 @@
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import { useEffect, useState } from "react"   // ✅ ADDED
+
+
 
 // Fix Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl
@@ -55,7 +58,21 @@ const getNearestShelter = (zone) => {
 
 const reportIcon = createIcon("violet")
 
-export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick }) {
+export default function DelhiHotspotMap({ zones: propZones = [], reports = [], onZoneClick }) {
+
+  // ✅ ADDED: local state
+  const [zones, setZones] = useState(propZones)
+
+  // ✅ ADDED: fetch ML-based Delhi zones
+  useEffect(() => {
+    if (propZones.length > 0) return // parent already provided zones
+
+    fetch("http://localhost:8000/api/delhi/zones")
+      .then(res => res.json())
+      .then(data => setZones(data))
+      .catch(err => console.error("Failed to fetch Delhi zones:", err))
+  }, [propZones])
+
   return (
     <MapContainer
       center={[28.6139, 77.209]}
@@ -63,7 +80,10 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
       style={{ height: "100%", width: "100%" }}
       className="rounded-xl z-0"
     >
-      <TileLayer attribution="© OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer
+        attribution="© OpenStreetMap contributors"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
 
       {zones.map((zone, idx) => {
         const nearest = getNearestShelter(zone)
@@ -88,23 +108,18 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
             </Tooltip>
 
             <Popup>
-              <b>{zone.zone_name}</b>
-              <br />
-              <b>Risk:</b> {zone.risk_status}
-              <br />
-              <b>Score:</b> {zone.risk_score}
-              <br />
-              <b>Elevation:</b> {zone.details?.elevation ?? "N/A"} m
-              <br />
+              <b>{zone.zone_name}</b><br />
+              <b>Risk:</b> {zone.risk_status}<br />
+              <b>Score:</b> {zone.risk_score}<br />
+              <b>Elevation:</b> {zone.details?.elevation ?? "N/A"} m<br />
               <b>Drainage:</b> {zone.details?.drainage ?? "Unknown"}
-              <br />
               <hr style={{ margin: "6px 0" }} />
-              <span>Nearest Shelter</span>
-              <br />
+              <b>Nearest Shelter:</b><br />
               {nearest.name}
-              <br />
               {zone.risk_status !== "LOW" && (
-                <p style={{ color: "red", fontSize: "12px", marginTop: "6px" }}>Avoid this area during heavy rain</p>
+                <p style={{ color: "red", fontSize: "12px", marginTop: "6px" }}>
+                  Avoid this area during heavy rain
+                </p>
               )}
             </Popup>
           </Marker>
@@ -115,17 +130,14 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
         <Marker key={`shelter-${i}`} position={[s.lat, s.lng]} icon={createIcon("blue")}>
           <Tooltip direction="top" offset={[0, -20]} opacity={1}>
             <div className="text-xs">
-              <b>Safe Shelter</b>
-              <br />
+              <b>Safe Shelter</b><br />
               {s.name}
             </div>
           </Tooltip>
 
           <Popup>
-            <b>Emergency Shelter</b>
-            <br />
-            {s.name}
-            <br />
+            <b>Emergency Shelter</b><br />
+            {s.name}<br />
             <span style={{ color: "green" }}>Safe elevated location</span>
           </Popup>
         </Marker>
@@ -133,15 +145,8 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
 
       {reports.map((r, i) => (
         <Marker key={`report-${i}`} position={[r.lat, r.lng]} icon={reportIcon}>
-          <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-            <div className="text-xs">
-              <b>Citizen Report</b>
-            </div>
-          </Tooltip>
-
           <Popup>
-            <b>Citizen Report</b>
-            <br />
+            <b>Citizen Report</b><br />
             {r.note || "Flooding reported here"}
           </Popup>
         </Marker>
