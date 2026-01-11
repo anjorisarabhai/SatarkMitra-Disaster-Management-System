@@ -23,9 +23,171 @@ import {
 import dynamic from "next/dynamic"
 import DelhiMapLegend from "./DelhiMapLegend"
 
+// Pass lang prop to the map
 const DelhiHotspotMap = dynamic(() => import("./DelhiHotspotMap"), { ssr: false })
 
 export default function DelhiPanel() {
+  // --- 1. LANGUAGE STATE & TRANSLATIONS ---
+  const [lang, setLang] = useState("en") // 'en' or 'hi'
+
+  const t = {
+    en: {
+      title: "Delhi Water-Logging Dashboard",
+      subtitle: "Real-time flood risk monitoring & decision support",
+      citizen: "Citizen",
+      authority: "Authority",
+      critical: "Critical",
+      high: "High Risk",
+      moderate: "Moderate",
+      low: "Low Risk",
+      weather: "Weather",
+      rain: "Rain (1h)",
+      temp: "Temperature",
+      humidity: "Humidity",
+      tabs: { map: "Map View", sim: "Simulation", report: "Report", zones: "All Zones" },
+      liveMap: "Live Hotspot Map",
+      clickDetails: "Click on markers for details",
+      highestRisk: "Highest Risk Areas",
+      rainTrend: "Rainfall Trend",
+      forecast: "Next 4 hours forecast",
+      simTitle: "Rainfall Simulation",
+      simDesc: "Simulate different rainfall scenarios to see how risk levels change",
+      simLabel: "Simulated Rainfall",
+      play: "Play Time-lapse",
+      pause: "Pause Time-lapse",
+      impact: "Simulation Impact Analysis",
+      reportTitle: "Report Water-Logging",
+      reportDesc: "Help us by reporting flooded areas. Your location is auto-detected.",
+      descLabel: "Description",
+      placeholder: "Describe location (e.g., near metro, market...)",
+      submit: "Submit Report",
+      detecting: "Detecting location...",
+      yourReports: "Your Reports",
+      noReports: "No reports yet. Be the first to report!",
+      allZones: "All Monitored Zones",
+      zoneDesc: "Detailed information for all zones",
+      riskScore: "Risk Score",
+      elevation: "Elevation",
+      drainage: "Drainage",
+      recAction: "Recommended Action",
+      advisory: "Travel Advisory",
+      safety: {
+        critical: "🚫 Avoid travel. Severe water-logging expected.",
+        high: "⚠️ Travel only if necessary. Expect disruptions.",
+        moderate: "🟡 Delays possible. Drive with caution.",
+        low: "✅ Safe for travel.",
+      },
+      actions: {
+        critical: "Emergency response required",
+        high: "Deploy pumps & drain cleanup",
+        moderate: "Inspect drainage systems",
+        low: "Monitoring only",
+      },
+    },
+    hi: {
+      title: "दिल्ली जलभराव डैशबोर्ड",
+      subtitle: "रीयल-टाइम बाढ़ जोखिम और निर्णय सहायता प्रणाली",
+      citizen: "नागरिक",
+      authority: "प्राधिकरण",
+      critical: "गंभीर",
+      high: "उच्च जोखिम",
+      moderate: "मध्यम",
+      low: "कम जोखिम",
+      weather: "मौसम",
+      rain: "वर्षा (1 घंटा)",
+      temp: "तापमान",
+      humidity: "नमी",
+      tabs: { map: "मानचित्र", sim: "सिमुलेशन", report: "रिपोर्ट करें", zones: "सभी क्षेत्र" },
+      liveMap: "लाइव जोखिम मानचित्र",
+      clickDetails: "विवरण के लिए मार्कर्स पर क्लिक करें",
+      highestRisk: "सर्वाधिक जोखिम वाले क्षेत्र",
+      rainTrend: "वर्षा का रुझान",
+      forecast: "अगले 4 घंटे का पूर्वानुमान",
+      simTitle: "वर्षा सिमुलेशन",
+      simDesc: "विभिन्न वर्षा स्थितियों का अनुकरण करें और जोखिम देखें",
+      simLabel: "सिमुलेटेड वर्षा",
+      play: "टाइम-लैप्स चलाएं",
+      pause: "टाइम-लैप्स रोकें",
+      impact: "सिमुलेशन प्रभाव विश्लेषण",
+      reportTitle: "जलभराव की रिपोर्ट करें",
+      reportDesc: "बाढ़ वाले क्षेत्रों की रिपोर्ट करें। आपका स्थान स्वतः पता लगाया जाएगा।",
+      descLabel: "विवरण",
+      placeholder: "स्थान का वर्णन करें (जैसे: मेट्रो के पास, बाजार...)",
+      submit: "रिपोर्ट भेजें",
+      detecting: "स्थान खोज रहा है...",
+      yourReports: "आपकी रिपोर्ट्स",
+      noReports: "अभी तक कोई रिपोर्ट नहीं। सबसे पहले रिपोर्ट करें!",
+      allZones: "सभी निगरानी क्षेत्र",
+      zoneDesc: "सभी क्षेत्रों के लिए विस्तृत जानकारी",
+      riskScore: "जोखिम स्कोर",
+      elevation: "ऊंचाई",
+      drainage: "ड्रेनेज",
+      recAction: "अनुशंसित कार्रवाई",
+      advisory: "यात्रा सलाह",
+      safety: {
+        critical: "🚫 यात्रा से बचें। गंभीर जलभराव की संभावना।",
+        high: "⚠️ केवल आवश्यक होने पर यात्रा करें।",
+        moderate: "🟡 देरी संभव है। सावधानी से वाहन चलाएं।",
+        low: "✅ यात्रा के लिए सुरक्षित।",
+      },
+      actions: {
+        critical: "आपातकालीन प्रतिक्रिया आवश्यक",
+        high: "पंप तैनात करें और नाली की सफाई करें",
+        moderate: "जल निकासी प्रणाली का निरीक्षण करें",
+        low: "केवल निगरानी",
+      },
+    },
+  }
+
+  const text = t[lang] // Current translation object
+
+  // --- NEW HELPER FUNCTIONS FOR DATA VALUES ---
+  const trStatus = (status) => {
+    if (lang === "en") return status;
+    const map = {
+        "CRITICAL": "गंभीर",
+        "HIGH": "उच्च",
+        "MODERATE": "मध्यम",
+        "LOW": "कम",
+    };
+    return map[status] || status;
+  }
+
+  const trDrainage = (val) => {
+    if (lang === "en") return val;
+    // Map both standard casing and uppercase just in case
+    const map = {
+        "Poor": "खराब", "POOR": "खराब",
+        "Moderate": "संतोषजनक", "MODERATE": "संतोषजनक",
+        "Good": "अच्छा", "GOOD": "अच्छा"
+    };
+    return map[val] || val;
+  }
+
+  // --- NEW: ZONE NAME TRANSLATION ---
+  const trZone = (name) => {
+    if (lang === "en") return name;
+    const zoneMap = {
+        "Minto Bridge (Connaught Place)": "मिंटो ब्रिज (कनॉट प्लेस)",
+        "ITO Junction": "आईटीओ जंक्शन",
+        "Okhla Underpass": "ओखला अंडरपास",
+        "Civil Lines": "सिविल लाइन्स",
+        "Dwarka Sector 12": "द्वारका सेक्टर 12",
+        "Sangam Vihar": "संगम विहार",
+        // Fallbacks for mock data if API fails
+        "Rohini Sector 15": "रोहिणी सेक्टर 15",
+        "Dwarka Sector 21": "द्वारका सेक्टर 21",
+        "Connaught Place": "कनॉट प्लेस",
+        "Lajpat Nagar": "लाजपत नगर",
+        "Karol Bagh": "करोल बाग",
+        "Saket": "साकेत",
+        "Janakpuri": "जनकपुरी",
+        "Pitampura": "पीतमपुरा"
+    };
+    return zoneMap[name] || name;
+  }
+  // --- END LANGUAGE SETUP ---
+
   const [zones, setZones] = useState([])
   const [weather, setWeather] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -47,10 +209,10 @@ export default function DelhiPanel() {
   ]
 
   const tabs = [
-    { id: "map", label: "Map View", icon: Map },
-    { id: "simulation", label: "Simulation", icon: Gauge },
-    { id: "report", label: "Report", icon: MessageSquarePlus },
-    { id: "zones", label: "All Zones", icon: LayoutGrid },
+    { id: "map", label: text.tabs.map, icon: Map },
+    { id: "simulation", label: text.tabs.sim, icon: Gauge },
+    { id: "report", label: text.tabs.report, icon: MessageSquarePlus },
+    { id: "zones", label: text.tabs.zones, icon: LayoutGrid },
   ]
 
   const fetchDelhiHotspots = async () => {
@@ -61,7 +223,7 @@ export default function DelhiPanel() {
       const data = await res.json()
       if (data.status === "success") {
         setZones(data.zones_data || [])
-        setWeather(data.city_weather || null) 
+        setWeather(data.city_weather || null)
       }
     } catch {
       setZones([
@@ -171,7 +333,6 @@ export default function DelhiPanel() {
     )
   }, [])
 
-
   const applyRainSimulation = (zone) => {
     let score = zone.risk_score
     if (simulatedRain > 40) score += 40
@@ -189,19 +350,21 @@ export default function DelhiPanel() {
   const simulatedZones = zones.map(applyRainSimulation)
   const topHotspots = [...simulatedZones].sort((a, b) => b.risk_score - a.risk_score).slice(0, 5)
 
+  // Updated to use Translation
   const getActionText = (risk) => {
-    if (risk === "CRITICAL") return "Emergency response required"
-    if (risk === "HIGH") return "Deploy pumps & drain cleanup"
-    if (risk === "MODERATE") return "Inspect drainage systems"
-    return "Monitoring only"
+    if (risk === "CRITICAL") return text.actions.critical
+    if (risk === "HIGH") return text.actions.high
+    if (risk === "MODERATE") return text.actions.moderate
+    return text.actions.low
   }
+  
+  // Updated to use Translation
   const getTravelCaution = (risk) => {
-  if (risk === "CRITICAL") return "🚫 Avoid travel. Severe water-logging expected."
-  if (risk === "HIGH") return "⚠️ Travel only if necessary. Expect disruptions."
-  if (risk === "MODERATE") return "🟡 Delays possible. Drive with caution."
-  return "✅ Safe for travel."
+    if (risk === "CRITICAL") return text.safety.critical
+    if (risk === "HIGH") return text.safety.high
+    if (risk === "MODERATE") return text.safety.moderate
+    return text.safety.low
   }
-
 
   const getBadgeStyles = (status) => {
     const styles = {
@@ -270,36 +433,55 @@ export default function DelhiPanel() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
               <Droplets className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Delhi Water-Logging Dashboard</h1>
-              <p className="text-sm text-slate-500">Real-time flood risk monitoring & decision support</p>
+              <h1 className="text-2xl font-bold text-slate-800">{text.title}</h1>
+              <p className="text-sm text-slate-500">{text.subtitle}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
-            <button
-              onClick={() => setViewMode("citizen")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                viewMode === "citizen" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              Citizen
-            </button>
-            <button
-              onClick={() => setViewMode("authority")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                viewMode === "authority" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              Authority
-            </button>
+          <div className="flex items-center gap-4">
+            {/* Language Toggle */}
+            <div className="flex bg-slate-100 rounded-full p-1 border border-slate-200">
+                <button 
+                  onClick={() => setLang("en")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'en' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
+                >
+                    ENG
+                </button>
+                <button 
+                  onClick={() => setLang("hi")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${lang === 'hi' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500'}`}
+                >
+                    हिंदी
+                </button>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+              <button
+                onClick={() => setViewMode("citizen")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  viewMode === "citizen" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                {text.citizen}
+              </button>
+              <button
+                onClick={() => setViewMode("authority")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  viewMode === "authority" ? "bg-white text-blue-600 shadow-md" : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                {text.authority}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -310,7 +492,7 @@ export default function DelhiPanel() {
           <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Critical</p>
+                <p className="text-sm font-medium text-slate-500">{text.critical}</p>
                 <p className="text-3xl font-bold text-red-600">{criticalCount}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -322,7 +504,7 @@ export default function DelhiPanel() {
           <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">High Risk</p>
+                <p className="text-sm font-medium text-slate-500">{text.high}</p>
                 <p className="text-3xl font-bold text-orange-600">{highCount}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
@@ -334,7 +516,7 @@ export default function DelhiPanel() {
           <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Moderate</p>
+                <p className="text-sm font-medium text-slate-500">{text.moderate}</p>
                 <p className="text-3xl font-bold text-yellow-600">{moderateCount}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -346,7 +528,7 @@ export default function DelhiPanel() {
           <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Low Risk</p>
+                <p className="text-sm font-medium text-slate-500">{text.low}</p>
                 <p className="text-3xl font-bold text-green-600">{lowCount}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -360,35 +542,34 @@ export default function DelhiPanel() {
         {weather && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-              <p className="text-xs font-medium text-slate-500">Weather</p>
+              <p className="text-xs font-medium text-slate-500">{text.weather}</p>
               <p className="text-lg font-semibold text-slate-800 capitalize">
                 {weather.description}
               </p>
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-              <p className="text-xs font-medium text-slate-500">Rain (last 1h)</p>
+              <p className="text-xs font-medium text-slate-500">{text.rain}</p>
               <p className="text-2xl font-bold text-blue-600">
                 {weather.rain_1h} mm
               </p>
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-              <p className="text-xs font-medium text-slate-500">Temperature</p>
+              <p className="text-xs font-medium text-slate-500">{text.temp}</p>
               <p className="text-2xl font-bold text-orange-600">
                 {weather.temperature} °C
               </p>
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-              <p className="text-xs font-medium text-slate-500">Humidity</p>
+              <p className="text-xs font-medium text-slate-500">{text.humidity}</p>
               <p className="text-2xl font-bold text-purple-600">
                 {weather.humidity} %
               </p>
             </div>
           </div>
         )}
-
 
         {/* Tabs Navigation */}
         <div className="flex justify-center">
@@ -415,7 +596,6 @@ export default function DelhiPanel() {
           </div>
         </div>
 
-
         {/* Tab Content */}
         <div className="animate-in fade-in duration-300">
           {/* MAP TAB */}
@@ -427,9 +607,9 @@ export default function DelhiPanel() {
                     <div>
                       <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                         <Map className="w-5 h-5 text-blue-500" />
-                        Live Hotspot Map
+                        {text.liveMap}
                       </h2>
-                      <p className="text-sm text-slate-500">Click on markers for details</p>
+                      <p className="text-sm text-slate-500">{text.clickDetails}</p>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-full">
                       <Radio className="w-3.5 h-3.5 text-green-600 animate-pulse" />
@@ -437,15 +617,17 @@ export default function DelhiPanel() {
                     </div>
                   </div>
                   <div className="relative h-[500px]">
+                    {/* Passing lang to map */}
                     <DelhiHotspotMap
                       zones={simulatedZones}
                       reports={reports}
+                      lang={lang}
                       onZoneClick={(name) => {
                         cardRefs.current[name]?.scrollIntoView({ behavior: "smooth" })
                       }}
                     />
                     <div className="absolute bottom-4 left-4 z-[1000]">
-                      <DelhiMapLegend />
+                      <DelhiMapLegend lang={lang} />
                     </div>
                   </div>
                 </div>
@@ -456,7 +638,7 @@ export default function DelhiPanel() {
                   <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100">
                     <h3 className="font-semibold text-red-800 flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5" />
-                      Highest Risk Areas
+                      {text.highestRisk}
                     </h3>
                   </div>
                   <div className="p-3 space-y-2">
@@ -471,12 +653,13 @@ export default function DelhiPanel() {
                             {i + 1}
                           </span>
                           <div>
-                            <p className="font-medium text-slate-800 text-sm">{z.zone_name}</p>
-                            <p className="text-xs text-slate-500">Score: {z.risk_score}</p>
+                            {/* APPLIED TRANSLATION HERE */}
+                            <p className="font-medium text-slate-800 text-sm">{trZone(z.zone_name)}</p>
+                            <p className="text-xs text-slate-500">{text.riskScore}: {z.risk_score}</p>
                           </div>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyles(z.risk_status)}`}>
-                          {z.risk_status}
+                          {trStatus(z.risk_status)}
                         </span>
                       </div>
                     ))}
@@ -487,9 +670,9 @@ export default function DelhiPanel() {
                   <div className="p-4 border-b border-slate-100">
                     <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-blue-500" />
-                      Rainfall Trend
+                      {text.rainTrend}
                     </h3>
-                    <p className="text-sm text-slate-500">Next 4 hours forecast</p>
+                    <p className="text-sm text-slate-500">{text.forecast}</p>
                   </div>
                   <div className="p-4">
                     <div className="flex items-end justify-between gap-2 h-32">
@@ -517,15 +700,15 @@ export default function DelhiPanel() {
                 <div className="p-5 border-b border-slate-100">
                   <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                     <CloudRain className="w-5 h-5 text-blue-500" />
-                    Rainfall Simulation
+                    {text.simTitle}
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Simulate different rainfall scenarios to see how risk levels change
+                    {text.simDesc}
                   </p>
                 </div>
                 <div className="p-5 space-y-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Simulated Rainfall</span>
+                    <span className="text-sm font-medium text-slate-600">{text.simLabel}</span>
                     <span className="text-2xl font-bold text-blue-600">{simulatedRain} mm/hr</span>
                   </div>
 
@@ -541,9 +724,9 @@ export default function DelhiPanel() {
                     />
                     <div className="flex justify-between text-xs text-slate-500">
                       <span>0 mm</span>
-                      <span>Light (10mm)</span>
-                      <span>Heavy (25mm)</span>
-                      <span>Extreme (50mm)</span>
+                      <span>10mm</span>
+                      <span>25mm</span>
+                      <span>50mm</span>
                     </div>
                   </div>
 
@@ -556,21 +739,21 @@ export default function DelhiPanel() {
                     }`}
                   >
                     {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                    {playing ? "Pause Time-lapse" : "Play Time-lapse"}
+                    {playing ? text.pause : text.play}
                   </button>
-                  <p className="text-center text-xs text-slate-500">Watch how risk levels change over time</p>
                 </div>
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">Simulated Risk Map</h3>
-                  <p className="text-sm text-slate-500">Current simulation: {simulatedRain} mm/hr rainfall</p>
+                  <h3 className="font-semibold text-slate-800">{text.liveMap} (Sim)</h3>
+                  <p className="text-sm text-slate-500">Current: {simulatedRain} mm/hr rainfall</p>
                 </div>
                 <div className="h-[350px]">
                   <DelhiHotspotMap
                     zones={simulatedZones}
                     reports={reports}
+                    lang={lang}
                     onZoneClick={(name) => {
                       cardRefs.current[name]?.scrollIntoView({ behavior: "smooth" })
                     }}
@@ -580,20 +763,20 @@ export default function DelhiPanel() {
 
               <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">Simulation Impact Analysis</h3>
-                  <p className="text-sm text-slate-500">How the current rainfall scenario affects each zone</p>
+                  <h3 className="font-semibold text-slate-800">{text.impact}</h3>
                 </div>
                 <div className="p-4">
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {simulatedZones.slice(0, 8).map((zone, i) => (
                       <div key={i} className={`rounded-xl p-4 ${getZoneCardStyles(zone.risk_status)}`}>
                         <div className="flex items-center justify-between mb-3">
-                          <span className="font-medium text-slate-800 text-sm">{zone.zone_name}</span>
+                          {/* APPLIED TRANSLATION HERE */}
+                          <span className="font-medium text-slate-800 text-sm">{trZone(zone.zone_name)}</span>
                           {getRiskIcon(zone.risk_status)}
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">Risk Score</span>
+                            <span className="text-slate-500">{text.riskScore}</span>
                             <span className="font-bold text-slate-800">{zone.risk_score}</span>
                           </div>
                           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -605,7 +788,7 @@ export default function DelhiPanel() {
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeStyles(zone.risk_status)}`}
                           >
-                            {zone.risk_status}
+                            {trStatus(zone.risk_status)}
                           </span>
                         </div>
                       </div>
@@ -623,24 +806,24 @@ export default function DelhiPanel() {
                 <div className="p-5 border-b border-slate-100">
                   <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                     <MessageSquarePlus className="w-5 h-5 text-purple-500" />
-                    Report Water-Logging
+                    {text.reportTitle}
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Help us by reporting flooded areas in your vicinity. Your location will be automatically detected.
+                    {text.reportDesc}
                   </p>
                 </div>
                 <div className="p-5 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">{text.descLabel}</label>
                     <input
                       type="text"
-                      placeholder="Describe the location (near metro, market, road name...)"
+                      placeholder={text.placeholder}
                       value={reportText}
                       onChange={(e) => setReportText(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 
-                      text-slate-900 bg-white 
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300
+                      text-slate-900 bg-white
                       placeholder:text-slate-400
-                      focus:border-purple-500 focus:ring-2 focus:ring-purple-200 
+                      focus:border-purple-500 focus:ring-2 focus:ring-purple-200
                       outline-none transition-all"
                     />
                   </div>
@@ -650,11 +833,11 @@ export default function DelhiPanel() {
                     className="w-full py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                   >
                     {reportLoading ? (
-                      "Detecting location..."
+                      text.detecting
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        Submit Report
+                        {text.submit}
                       </>
                     )}
                   </button>
@@ -666,7 +849,7 @@ export default function DelhiPanel() {
                 <div className="p-4 border-b border-slate-100">
                   <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-blue-500" />
-                    Your Reports
+                    {text.yourReports}
                   </h3>
                   <p className="text-sm text-slate-500">{reports.length} reports submitted</p>
                 </div>
@@ -674,7 +857,7 @@ export default function DelhiPanel() {
                   {reports.length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
                       <MessageSquarePlus className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No reports yet. Be the first to report!</p>
+                      <p>{text.noReports}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -703,9 +886,9 @@ export default function DelhiPanel() {
                 <div className="p-4 border-b border-slate-100">
                   <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                     <LayoutGrid className="w-5 h-5 text-blue-500" />
-                    All Monitored Zones
+                    {text.allZones}
                   </h2>
-                  <p className="text-sm text-slate-500">Detailed information for all {simulatedZones.length} zones</p>
+                  <p className="text-sm text-slate-500">{text.zoneDesc}</p>
                 </div>
                 <div className="p-4">
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -717,7 +900,8 @@ export default function DelhiPanel() {
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="font-semibold text-slate-800">{zone.zone_name}</h3>
+                            {/* APPLIED TRANSLATION HERE */}
+                            <h3 className="font-semibold text-slate-800">{trZone(zone.zone_name)}</h3>
                             <p className="text-xs text-slate-500 mt-1">
                               {zone.latitude.toFixed(4)}, {zone.longitude.toFixed(4)}
                             </p>
@@ -727,7 +911,7 @@ export default function DelhiPanel() {
 
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-slate-500">Risk Score</span>
+                            <span className="text-sm text-slate-500">{text.riskScore}</span>
                             <span className="text-xl font-bold text-slate-800">{zone.risk_score}</span>
                           </div>
                           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -739,32 +923,32 @@ export default function DelhiPanel() {
                           <span
                             className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeStyles(zone.risk_status)}`}
                           >
-                            {zone.risk_status}
+                            {trStatus(zone.risk_status)}
                           </span>
 
                           {zone.details && (
                             <div className="pt-3 mt-3 border-t border-slate-200 space-y-1.5">
                               <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Elevation</span>
+                                <span className="text-slate-500">{text.elevation}</span>
                                 <span className="font-medium text-slate-700">{zone.details.elevation}m</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Drainage</span>
-                                <span className="font-medium text-slate-700">{zone.details.drainage}</span>
+                                <span className="text-slate-500">{text.drainage}</span>
+                                <span className="font-medium text-slate-700">{trDrainage(zone.details.drainage)}</span>
                               </div>
                             </div>
                           )}
 
                           {viewMode === "authority" && (
                             <div className="pt-3 mt-3 border-t border-slate-200">
-                              <p className="text-xs font-medium text-slate-500 mb-1">Recommended Action</p>
+                              <p className="text-xs font-medium text-slate-500 mb-1">{text.recAction}</p>
                               <p className="text-sm font-semibold text-blue-700">{getActionText(zone.risk_status)}</p>
                             </div>
                           )}
                           {viewMode === "citizen" && (
                             <div className="pt-3 mt-3 border-t border-slate-200">
                               <p className="text-xs font-medium text-slate-500 mb-1">
-                                Travel Advisory
+                                {text.advisory}
                               </p>
                               <p className="text-sm font-semibold text-red-600">
                                 {getTravelCaution(zone.risk_status)}

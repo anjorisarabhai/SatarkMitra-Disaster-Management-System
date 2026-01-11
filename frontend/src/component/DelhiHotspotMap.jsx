@@ -63,11 +63,91 @@ const reportIcon = createIcon("violet")
 
 /**
  * Props:
- * zones       → simulated zones from parent (IMPORTANT)
- * reports     → citizen reports
+ * zones     → simulated zones from parent (IMPORTANT)
+ * reports   → citizen reports
  * onZoneClick → scroll to card callback
+ * lang      → "en" or "hi" for translation
  */
-export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick }) {
+export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick, lang = "en" }) {
+  
+  // 🇮🇳 Translation Dictionary for Map Popups
+  const t = {
+    en: {
+      risk: "Risk",
+      score: "Score",
+      elevation: "Elevation",
+      drainage: "Drainage",
+      nearestShelter: "Nearest Shelter",
+      avoidWarning: "⚠ Avoid this area during heavy rain",
+      safeShelter: "Safe Shelter",
+      emergencyShelter: "Emergency Shelter",
+      safeLocation: "Safe elevated location",
+      citizenReport: "🗣 Citizen Report",
+      floodingReported: "Flooding reported here",
+      unknown: "Unknown",
+    },
+    hi: {
+      risk: "जोखिम",
+      score: "स्कोर",
+      elevation: "ऊंचाई",
+      drainage: "ड्रेनेज",
+      nearestShelter: "निकटतम आश्रय",
+      avoidWarning: "⚠ भारी बारिश में इस क्षेत्र से बचें",
+      safeShelter: "सुरक्षित आश्रय",
+      emergencyShelter: "आपातकालीन आश्रय",
+      safeLocation: "सुरक्षित ऊँचा स्थान",
+      citizenReport: "🗣 नागरिक रिपोर्ट",
+      floodingReported: "यहाँ जलभराव की सूचना मिली",
+      unknown: "अज्ञात",
+    },
+  }
+
+  const text = t[lang] || t.en
+
+  // 🇮🇳 Zone Name Translations
+  const trZone = (name) => {
+    if (lang === "en") return name;
+    const zoneMap = {
+        "Minto Bridge (Connaught Place)": "मिंटो ब्रिज (कनॉट प्लेस)",
+        "ITO Junction": "आईटीओ जंक्शन",
+        "Okhla Underpass": "ओखला अंडरपास",
+        "Civil Lines": "सिविल लाइन्स",
+        "Dwarka Sector 12": "द्वारका सेक्टर 12",
+        "Sangam Vihar": "संगम विहार",
+        "Rohini Sector 15": "रोहिणी सेक्टर 15",
+        "Dwarka Sector 21": "द्वारका सेक्टर 21",
+        "Connaught Place": "कनॉट प्लेस",
+        "Lajpat Nagar": "लाजपत नगर",
+        "Karol Bagh": "करोल बाग",
+        "Saket": "साकेत",
+        "Janakpuri": "जनकपुरी",
+        "Pitampura": "पीतमपुरा"
+    };
+    return zoneMap[name] || name;
+  }
+  
+  const trStatus = (status) => {
+    if (lang === "en") return status;
+    const map = {
+        "CRITICAL": "गंभीर",
+        "HIGH": "उच्च",
+        "MODERATE": "मध्यम",
+        "LOW": "कम",
+    };
+    return map[status] || status;
+  }
+  
+  const trDrainage = (val) => {
+      if (lang === "en") return val;
+      const map = {
+          "Poor": "खराब", "POOR": "खराब",
+          "Moderate": "संतोषजनक", "MODERATE": "संतोषजनक",
+          "Good": "अच्छा", "GOOD": "अच्छा"
+      };
+      return map[val] || val;
+  }
+
+
   return (
     <MapContainer
       center={[28.6139, 77.209]}
@@ -96,32 +176,32 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
             {/* 🟡 HOVER */}
             <Tooltip direction="top" offset={[0, -20]} opacity={1}>
               <div className="text-xs">
-                <b>{zone.zone_name}</b>
+                <b>{trZone(zone.zone_name)}</b>
                 <br />
-                Risk: {zone.risk_status}
+                {text.risk}: {trStatus(zone.risk_status)}
                 <br />
-                Score: {zone.risk_score}
+                {text.score}: {zone.risk_score}
               </div>
             </Tooltip>
 
             {/* 🔵 POPUP */}
             <Popup>
-              <b>{zone.zone_name}</b>
+              <b>{trZone(zone.zone_name)}</b>
               <br />
-              <b>Risk:</b> {zone.risk_status}
+              <b>{text.risk}:</b> {trStatus(zone.risk_status)}
               <br />
-              <b>Score:</b> {zone.risk_score}
+              <b>{text.score}:</b> {zone.risk_score}
               <br />
-              <b>Elevation:</b> {zone.details?.elevation ?? "N/A"} m
+              <b>{text.elevation}:</b> {zone.details?.elevation ?? "N/A"} m
               <br />
-              <b>Drainage:</b> {zone.details?.drainage ?? "Unknown"}
+              <b>{text.drainage}:</b> {trDrainage(zone.details?.drainage) ?? text.unknown}
               <hr style={{ margin: "6px 0" }} />
-              🧭 <b>Nearest Shelter</b>
+              🧭 <b>{text.nearestShelter}</b>
               <br />
               {nearest.name}
               {zone.risk_status !== "LOW" && (
                 <p style={{ color: "red", fontSize: "12px", marginTop: "6px" }}>
-                  ⚠ Avoid this area during heavy rain
+                  {text.avoidWarning}
                 </p>
               )}
             </Popup>
@@ -134,18 +214,18 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
         <Marker key={`shelter-${i}`} position={[s.lat, s.lng]} icon={createIcon("blue")}>
           <Tooltip direction="top" offset={[0, -20]} opacity={1}>
             <div className="text-xs">
-              🧭 <b>Safe Shelter</b>
+              🧭 <b>{text.safeShelter}</b>
               <br />
               {s.name}
             </div>
           </Tooltip>
 
           <Popup>
-            <b>Emergency Shelter</b>
+            <b>{text.emergencyShelter}</b>
             <br />
             {s.name}
             <br />
-            <span style={{ color: "green" }}>Safe elevated location</span>
+            <span style={{ color: "green" }}>{text.safeLocation}</span>
           </Popup>
         </Marker>
       ))}
@@ -154,9 +234,9 @@ export default function DelhiHotspotMap({ zones = [], reports = [], onZoneClick 
       {reports.map((r, i) => (
         <Marker key={`report-${i}`} position={[r.lat, r.lng]} icon={reportIcon}>
           <Popup>
-            <b>🗣 Citizen Report</b>
+            <b>{text.citizenReport}</b>
             <br />
-            {r.note || "Flooding reported here"}
+            {r.note || text.floodingReported}
           </Popup>
         </Marker>
       ))}
