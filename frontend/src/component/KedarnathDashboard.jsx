@@ -14,17 +14,20 @@ import {
   Route,
   X,
   Plus,
-  CloudRain,
   Droplets,
   Waves
 } from "lucide-react"
 
+// Dynamically import the map to prevent server-side errors
 const KedarnathLeafletMap = dynamic(
   () => import("./KedarnathLeafletMap"),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-500">Loading Map...</div>
+  }
 )
 
-// --- AI PREDICTION COMPONENT ---
+// --- UPDATED AI PREDICTION COMPONENT ---
 const FloodAlertPanel = () => {
   const [riverLevel, setRiverLevel] = useState('');
   const [rainfall, setRainfall] = useState('');
@@ -37,16 +40,22 @@ const FloodAlertPanel = () => {
     setResult(null);
 
     try {
+      // Connects to your Flask app.py @ /api/predict
       const res = await fetch('http://127.0.0.1:8000/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ river_level: riverLevel, rainfall: rainfall }),
       });
       const data = await res.json();
-      if (data.status === 'success') setResult(data);
-      else alert(data.message);
+      
+      if (data.status === 'success') {
+        setResult(data);
+      } else {
+        alert(data.message || "Prediction failed");
+      }
     } catch (e) {
-      alert("Failed to connect to SatarkMitra AI Server.");
+      console.error(e);
+      alert("Failed to connect to SatarkMitra AI Server. Ensure app.py is running on port 8000.");
     }
     setLoading(false);
   };
@@ -57,7 +66,7 @@ const FloodAlertPanel = () => {
         <h3 className="card-title flex items-center gap-2">
           <Activity className="icon text-blue-500" /> AI Prediction Core
         </h3>
-        <p className="card-description">Hybrid Ensemble Model (XGB + SVM + GRU)</p>
+        <p className="card-description">Kedarnath Specific Model (GRU + TCN + XGBoost)</p>
       </div>
 
       <div className="card-content">
@@ -95,9 +104,13 @@ const FloodAlertPanel = () => {
           disabled={loading}
           className="btn btn-primary w-full py-3 flex justify-center items-center gap-2 font-bold"
         >
-          {loading ? "Analyzing 23 Features..." : "Run Risk Analysis"}
+          {loading ? "Analyzing Real-time Data..." : "Run Risk Analysis"}
         </button>
 
+        {/* UPDATED RESULT DISPLAY 
+           This now strictly matches your app.py response:
+           { "status": "success", "location": "Kedarnath", "alert_level": "HIGH"/"LOW" }
+        */}
         {result && (
           <div className={`mt-6 p-4 rounded-lg border-l-4 shadow-sm ${result.alert_level === 'HIGH' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'}`}>
             <div className="flex items-start gap-3">
@@ -107,14 +120,11 @@ const FloodAlertPanel = () => {
                   {result.alert_level} RISK DETECTED
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">
-                  AI Confidence: <strong>{result.flood_probability}%</strong>
+                  Location: <strong>{result.location}</strong>
                 </p>
-
-                <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500 grid grid-cols-2 gap-x-6 gap-y-1">
-                  <span>XGBoost Vote: <b className={result.model_details.xgboost_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.xgboost_risk ? 'DANGER' : 'SAFE'}</b></span>
-                  <span>SVM Vote: <b className={result.model_details.svm_risk ? 'text-red-600' : 'text-green-600'}>{result.model_details.svm_risk ? 'DANGER' : 'SAFE'}</b></span>
-                  <span className="col-span-2 mt-1">GRU Forecast: {result.model_details.gru_forecast.toFixed(2)} sq km</span>
-                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Analysis based on hybrid deep learning architecture.
+                </p>
               </div>
             </div>
           </div>
@@ -124,7 +134,9 @@ const FloodAlertPanel = () => {
   );
 };
 
-// Mock data - moved outside to prevent re-initialization
+// --- REST OF THE DASHBOARD COMPONENTS ---
+
+// Mock data (unchanged)
 const initialMockAlerts = [
   { id: 1, type: "critical", title: "Flash Flood Warning", location: "Mandakini River", time: "2 min ago", acknowledged: false },
   { id: 2, type: "warning", title: "Rising Water Levels", location: "Gaurikund Station", time: "15 min ago", acknowledged: true },
@@ -157,8 +169,10 @@ const nearbyResources = [
 
 export default function FloodManagementApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [kedarnathRisk, setKedarnathRisk] = useState(null)
+  const [currentTime, setCurrentTime] = useState(null);
+  
+  // NOTE: You can wire this up to the backend result later if you want the map to turn red on high risk
+  const [kedarnathRisk, setKedarnathRisk] = useState(null) 
 
   const [alerts, setAlerts] = useState(initialMockAlerts);
   const [contacts, setContacts] = useState(initialEmergencyContacts);
@@ -186,6 +200,7 @@ export default function FloodManagementApp() {
   };
 
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
@@ -207,13 +222,17 @@ export default function FloodManagementApp() {
         <div className="main-header">
           <h1>Kedarnath Flood Management</h1>
           <p>Real-time monitoring and emergency response dashboard</p>
+          {currentTime && (
+             <p className="text-sm text-gray-500 mt-1">
+               {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
+             </p>
+          )}
         </div>
 
         <div className="tabs-list">
           <button className={`tab-trigger ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}><MapPin /> Dashboard</button>
           <button className={`tab-trigger ${activeTab === 'water-levels' ? 'active' : ''}`} onClick={() => setActiveTab('water-levels')}><Activity /> Water Levels</button>
           <button className={`tab-trigger ${activeTab === 'prediction' ? 'active' : ''}`} onClick={() => setActiveTab('prediction')}><Shield /> AI Prediction</button>
-
           <button className={`tab-trigger ${activeTab === 'alerts' ? 'active' : ''}`} onClick={() => setActiveTab('alerts')}><AlertTriangle /> Alerts</button>
           <button className={`tab-trigger ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}><Phone /> Contacts</button>
           <button className={`tab-trigger ${activeTab === 'protocols' ? 'active' : ''}`} onClick={() => setActiveTab('protocols')}><ClipboardList /> Protocols</button>
