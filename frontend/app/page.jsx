@@ -86,7 +86,7 @@ export default function Page() {
                 </div>
 
                 <h1 className="text-5xl md:text-7xl font-extrabold mb-4 text-slate-900">
-                  Disaster Response AI
+                  SatarkMitra Disaster Management
                 </h1>
 
                 <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-8">
