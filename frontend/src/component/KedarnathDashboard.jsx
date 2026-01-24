@@ -15,7 +15,12 @@ import {
   X,
   Plus,
   Droplets,
-  Waves
+  Waves,
+  CheckCircle2,
+  Circle,
+  Filter,
+  Navigation,
+  Info
 } from "lucide-react"
 
 // Dynamically import the map to prevent server-side errors
@@ -27,7 +32,7 @@ const KedarnathLeafletMap = dynamic(
   }
 )
 
-// --- UPDATED AI PREDICTION COMPONENT ---
+// --- AI PREDICTION COMPONENT ---
 const FloodAlertPanel = () => {
   const [riverLevel, setRiverLevel] = useState('');
   const [rainfall, setRainfall] = useState('');
@@ -40,7 +45,6 @@ const FloodAlertPanel = () => {
     setResult(null);
 
     try {
-      // Connects to your Flask app.py @ /api/predict
       const res = await fetch('http://127.0.0.1:8000/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,10 +111,6 @@ const FloodAlertPanel = () => {
           {loading ? "Analyzing Real-time Data..." : "Run Risk Analysis"}
         </button>
 
-        {/* UPDATED RESULT DISPLAY 
-           This now strictly matches your app.py response:
-           { "status": "success", "location": "Kedarnath", "alert_level": "HIGH"/"LOW" }
-        */}
         {result && (
           <div className={`mt-6 p-4 rounded-lg border-l-4 shadow-sm ${result.alert_level === 'HIGH' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'}`}>
             <div className="flex items-start gap-3">
@@ -136,7 +136,7 @@ const FloodAlertPanel = () => {
 
 // --- REST OF THE DASHBOARD COMPONENTS ---
 
-// Mock data (unchanged)
+// Mock data
 const initialMockAlerts = [
   { id: 1, type: "critical", title: "Flash Flood Warning", location: "Mandakini River", time: "2 min ago", acknowledged: false },
   { id: 2, type: "warning", title: "Rising Water Levels", location: "Gaurikund Station", time: "15 min ago", acknowledged: true },
@@ -155,27 +155,42 @@ const waterStations = [
   { id: "station-c", name: "Kedarnath Base", location: "Downstream Checkpoint", currentLevel: 4.1, status: "normal", capacity: 8.5, lastUpdated: "3 min ago" },
 ];
 
-const emergencyProtocols = {
-  normal: ["Monitor water levels every 6 hours.", "Weekly check of communication systems."],
-  warning: ["Increase monitoring frequency to every hour.", "Place emergency response teams on standby."],
-  critical: ["Activate Emergency Operations Center (EOC).", "Issue immediate evacuation orders for high-risk zones."],
+const initialProtocolsData = {
+  normal: [
+    { id: 'n1', text: "Monitor water levels every 6 hours.", completed: false },
+    { id: 'n2', text: "Weekly check of communication systems.", completed: false },
+    { id: 'n3', text: "Verify sensor battery levels.", completed: false }
+  ],
+  warning: [
+    { id: 'w1', text: "Increase monitoring frequency to every hour.", completed: false },
+    { id: 'w2', text: "Place emergency response teams on standby.", completed: false },
+    { id: 'w3', text: "Broadcast SMS alert to registered locals.", completed: false }
+  ],
+  critical: [
+    { id: 'c1', text: "Activate Emergency Operations Center (EOC).", completed: false },
+    { id: 'c2', text: "Issue immediate evacuation orders.", completed: false },
+    { id: 'c3', text: "Deploy NDRF teams to low-lying areas.", completed: false }
+  ],
 };
 
 const nearbyResources = [
-  { id: 1, name: "Govt. Primary School Shelter", location: "Rampur Village, 2km away", capacity: 150, status: "Open" },
-  { id: 2, name: "Community Hall Shelter", location: "Sitapur, 3km away", capacity: 250, status: "Open" },
-  { id: 3, name: "Old Temple Guesthouse", location: "Gaurikund, 1.5km away", capacity: 80, status: "Full" },
+  { id: 1, name: "Govt. Primary School Shelter", location: "Rampur Village", dist: "2km", capacity: 150, current_occupancy: 45, status: "Open" },
+  { id: 2, name: "Community Hall Shelter", location: "Sitapur", dist: "3km", capacity: 250, current_occupancy: 200, status: "Open" },
+  { id: 3, name: "Old Temple Guesthouse", location: "Gaurikund", dist: "1.5km", capacity: 80, current_occupancy: 80, status: "Full" },
 ];
 
 export default function FloodManagementApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentTime, setCurrentTime] = useState(null);
-  
-  // NOTE: You can wire this up to the backend result later if you want the map to turn red on high risk
   const [kedarnathRisk, setKedarnathRisk] = useState(null) 
 
   const [alerts, setAlerts] = useState(initialMockAlerts);
   const [contacts, setContacts] = useState(initialEmergencyContacts);
+  const [protocols, setProtocols] = useState(initialProtocolsData);
+
+  // New States for Interactivity
+  const [alertFilter, setAlertFilter] = useState('all'); // all, critical, warning, info
+  const [calculatingRoute, setCalculatingRoute] = useState(null); // ID of resource
 
   const [isAddAlertModalOpen, setIsAddAlertModalOpen] = useState(false);
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
@@ -199,6 +214,27 @@ export default function FloodManagementApp() {
     setNewContact({ name: '', role: '', contact: '' });
   };
 
+  const toggleProtocol = (category, id) => {
+    setProtocols(prev => ({
+      ...prev,
+      [category]: prev[category].map(p => 
+        p.id === id ? { ...p, completed: !p.completed } : p
+      )
+    }));
+  };
+
+  const acknowledgeAlert = (id) => {
+    setAlerts(alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a));
+  };
+
+  const simulateRouteCalculation = (id) => {
+    setCalculatingRoute(id);
+    setTimeout(() => {
+      setCalculatingRoute(null);
+      alert("Route calculated! Directions sent to map.");
+    }, 2000);
+  };
+
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -215,6 +251,8 @@ export default function FloodManagementApp() {
     const iconClass = type === 'critical' ? 'icon-destructive' : (type === 'warning' ? 'icon-warning' : 'icon-info');
     return <AlertTriangle className={`icon ${iconClass}`} />;
   };
+
+  const filteredAlerts = alerts.filter(a => alertFilter === 'all' || a.type === alertFilter);
 
   return (
     <>
@@ -335,28 +373,67 @@ export default function FloodManagementApp() {
             </div>
           )}
 
+          {/* --- UPDATED INTERACTIVE ALERTS TAB --- */}
           {activeTab === 'alerts' && (
             <div className="animate-fadeInUp">
-              <div className="tab-header">
-                <h2>Manage Alerts</h2>
-                <button className="btn btn-primary" onClick={() => setIsAddAlertModalOpen(true)}>
-                  <Plus size={16} /> Add New Alert
+              <div className="tab-header flex justify-between items-center mb-4">
+                <div>
+                   <h2>Alert Center</h2>
+                   <p className="text-gray-500">Real-time emergency broadcasts</p>
+                </div>
+                <div className="flex gap-2">
+                   {['all', 'critical', 'warning', 'info'].map(filter => (
+                      <button 
+                        key={filter} 
+                        onClick={() => setAlertFilter(filter)}
+                        className={`px-3 py-1 rounded-full text-sm capitalize ${alertFilter === filter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
+                         {filter}
+                      </button>
+                   ))}
+                </div>
+                <button className="btn btn-primary ml-4" onClick={() => setIsAddAlertModalOpen(true)}>
+                  <Plus size={16} /> Broadcast Alert
                 </button>
               </div>
-              {alerts.map(alert => (
-                <div key={alert.id} className={`alert ${alert.type === 'critical' ? 'alert-critical' : 'alert-warning'}`}>
-                  <div className="alert-header">
-                    {getAlertIcon(alert.type)}
-                    <h3 className="alert-title">{alert.title}</h3>
-                  </div>
-                  <p className="alert-description">{alert.location} • {alert.time}</p>
-                  {!alert.acknowledged && (
-                    <div className="alert-actions">
-                      <button className="btn btn-secondary">Acknowledge</button>
+
+              <div className="space-y-3">
+                {filteredAlerts.length === 0 && (
+                   <div className="text-center py-12 text-gray-400">
+                      <CheckCircle2 className="mx-auto h-12 w-12 mb-2 opacity-50" />
+                      <p>No active alerts in this category.</p>
+                   </div>
+                )}
+                {filteredAlerts.map(alert => (
+                  <div key={alert.id} className={`alert ${alert.type === 'critical' ? 'alert-critical' : (alert.type === 'warning' ? 'alert-warning' : 'bg-blue-50 border-l-4 border-blue-500 text-blue-900')} shadow-sm transition-all hover:shadow-md`}>
+                    <div className="flex items-start justify-between w-full">
+                       <div className="flex gap-3">
+                          <div className="mt-1">{getAlertIcon(alert.type)}</div>
+                          <div>
+                             <h3 className="font-bold text-lg">{alert.title}</h3>
+                             <p className="text-sm opacity-90 flex items-center gap-2 mt-1">
+                                <MapPin size={14} /> {alert.location}
+                                <span className="opacity-50">•</span> 
+                                {alert.time}
+                             </p>
+                          </div>
+                       </div>
+                       
+                       <div className="alert-actions">
+                        {alert.acknowledged ? (
+                           <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider opacity-70 border px-2 py-1 rounded">
+                              <Check size={12} /> Acknowledged
+                           </span>
+                        ) : (
+                          <button onClick={() => acknowledgeAlert(alert.id)} className="btn btn-sm bg-white/80 hover:bg-white text-black text-xs px-3 py-1">
+                             Acknowledge
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -382,43 +459,180 @@ export default function FloodManagementApp() {
           )}
 
           {activeTab === 'protocols' && (
-            <div className="grid-container grid-cols-3-responsive animate-fadeInUp">
-              <div className="card">
-                <h3 className="card-title protocol-title normal">Normal Conditions</h3>
-                <ul className="protocol-list">
-                  {emergencyProtocols.normal.map((item, i) => <li key={i}><Check /> {item}</li>)}
-                </ul>
-              </div>
-              <div className="card">
-                <h3 className="card-title protocol-title warning">Warning Level</h3>
-                <ul className="protocol-list">
-                  {emergencyProtocols.warning.map((item, i) => <li key={i}><AlertTriangle /> {item}</li>)}
-                </ul>
-              </div>
-              <div className="card">
-                <h3 className="card-title protocol-title critical">Critical Level</h3>
-                <ul className="protocol-list">
-                  {emergencyProtocols.critical.map((item, i) => <li key={i}><Shield /> {item}</li>)}
-                </ul>
+            <div className="animate-fadeInUp">
+               <div className="tab-header text-center mb-8">
+                  <h2>Operational Protocols</h2>
+                  <p className="text-gray-500">Click on tasks to mark them as complete.</p>
+               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Normal Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-green-200 overflow-hidden">
+                   <div className="bg-green-50 dark:bg-green-900/20 p-4 border-b border-green-100 dark:border-green-800">
+                      <div className="flex items-center justify-between">
+                         <h3 className="font-bold text-green-800 dark:text-green-400 flex items-center gap-2">
+                            <CheckCircle2 size={20} /> Normal Level
+                         </h3>
+                         <span className="text-xs font-semibold bg-white text-green-700 px-2 py-1 rounded-full shadow-sm">
+                           {protocols.normal.filter(p => p.completed).length}/{protocols.normal.length} Done
+                         </span>
+                      </div>
+                   </div>
+                   <div className="p-4 space-y-3">
+                      {protocols.normal.map((item) => (
+                         <div 
+                           key={item.id} 
+                           onClick={() => toggleProtocol('normal', item.id)}
+                           className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${item.completed ? 'bg-green-50 opacity-70' : 'hover:bg-gray-50 bg-gray-50/50'}`}
+                         >
+                            <div className={`mt-0.5 ${item.completed ? 'text-green-600' : 'text-gray-300'}`}>
+                               {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                            </div>
+                            <span className={`text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                               {item.text}
+                            </span>
+                         </div>
+                      ))}
+                      <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-green-500 transition-all duration-500" 
+                           style={{ width: `${(protocols.normal.filter(p => p.completed).length / protocols.normal.length) * 100}%` }}
+                         ></div>
+                      </div>
+                   </div>
+                </div>
+                {/* Warning Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
+                   <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 border-b border-yellow-100 dark:border-yellow-800">
+                      <div className="flex items-center justify-between">
+                         <h3 className="font-bold text-yellow-800 dark:text-yellow-400 flex items-center gap-2">
+                            <AlertTriangle size={20} /> Warning Level
+                         </h3>
+                         <span className="text-xs font-semibold bg-white text-yellow-700 px-2 py-1 rounded-full shadow-sm">
+                           {protocols.warning.filter(p => p.completed).length}/{protocols.warning.length} Done
+                         </span>
+                      </div>
+                   </div>
+                   <div className="p-4 space-y-3">
+                      {protocols.warning.map((item) => (
+                         <div 
+                           key={item.id} 
+                           onClick={() => toggleProtocol('warning', item.id)}
+                           className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${item.completed ? 'bg-yellow-50 opacity-70' : 'hover:bg-gray-50 bg-gray-50/50'}`}
+                         >
+                            <div className={`mt-0.5 ${item.completed ? 'text-yellow-600' : 'text-gray-300'}`}>
+                               {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                            </div>
+                            <span className={`text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                               {item.text}
+                            </span>
+                         </div>
+                      ))}
+                       <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-yellow-500 transition-all duration-500" 
+                           style={{ width: `${(protocols.warning.filter(p => p.completed).length / protocols.warning.length) * 100}%` }}
+                         ></div>
+                      </div>
+                   </div>
+                </div>
+                {/* Critical Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-red-200 overflow-hidden">
+                   <div className="bg-red-50 dark:bg-red-900/20 p-4 border-b border-red-100 dark:border-red-800">
+                      <div className="flex items-center justify-between">
+                         <h3 className="font-bold text-red-800 dark:text-red-400 flex items-center gap-2">
+                            <Shield size={20} /> Critical Level
+                         </h3>
+                         <span className="text-xs font-semibold bg-white text-red-700 px-2 py-1 rounded-full shadow-sm">
+                           {protocols.critical.filter(p => p.completed).length}/{protocols.critical.length} Done
+                         </span>
+                      </div>
+                   </div>
+                   <div className="p-4 space-y-3">
+                      {protocols.critical.map((item) => (
+                         <div 
+                           key={item.id} 
+                           onClick={() => toggleProtocol('critical', item.id)}
+                           className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${item.completed ? 'bg-red-50 opacity-70' : 'hover:bg-gray-50 bg-gray-50/50'}`}
+                         >
+                            <div className={`mt-0.5 ${item.completed ? 'text-red-600' : 'text-gray-300'}`}>
+                               {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                            </div>
+                            <span className={`text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                               {item.text}
+                            </span>
+                         </div>
+                      ))}
+                       <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-red-500 transition-all duration-500" 
+                           style={{ width: `${(protocols.critical.filter(p => p.completed).length / protocols.critical.length) * 100}%` }}
+                         ></div>
+                      </div>
+                   </div>
+                </div>
               </div>
             </div>
           )}
 
+          {/* --- UPDATED INTERACTIVE RESOURCES TAB --- */}
           {activeTab === 'resources' && (
             <div className="animate-fadeInUp">
-              {nearbyResources.map(resource => (
-                <div key={resource.id} className="card resource-card">
-                  <div>
-                    <h3 className="card-title">{resource.name}</h3>
-                    <p className="card-description">{resource.location}</p>
-                  </div>
-                  <div className="resource-details">
-                    <p>Capacity: {resource.capacity}</p>
-                    <span className={`badge ${resource.status === 'Open' ? 'badge-normal' : 'badge-destructive'}`}>{resource.status}</span>
-                    <button className="btn btn-primary"><Route className="icon" /> View Path</button>
-                  </div>
-                </div>
-              ))}
+               <div className="tab-header text-center mb-8">
+                  <h2>Safe Shelters & Resources</h2>
+                  <p className="text-gray-500">Find nearest relief camps and check occupancy.</p>
+               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {nearbyResources.map(resource => {
+                   const occupancyPct = (resource.current_occupancy / resource.capacity) * 100;
+                   const isFull = resource.status === 'Full';
+                   
+                   return (
+                    <div key={resource.id} className="card resource-card flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                           <h3 className="card-title text-lg">{resource.name}</h3>
+                           <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded flex items-center gap-1">
+                              <Navigation size={10} /> {resource.dist}
+                           </span>
+                        </div>
+                        <p className="card-description flex items-center gap-1 mb-4">
+                           <MapPin size={14} /> {resource.location}
+                        </p>
+                        
+                        <div className="mb-4">
+                           <div className="flex justify-between text-xs mb-1 text-gray-500">
+                              <span>Occupancy</span>
+                              <span>{resource.current_occupancy} / {resource.capacity}</span>
+                           </div>
+                           <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div 
+                                 className={`h-full ${isFull ? 'bg-red-500' : (occupancyPct > 80 ? 'bg-yellow-500' : 'bg-green-500')}`} 
+                                 style={{ width: `${occupancyPct}%` }}
+                              ></div>
+                           </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-2 pt-4 border-t">
+                        <span className={`badge ${isFull ? 'badge-destructive' : 'badge-normal'}`}>
+                           {resource.status}
+                        </span>
+                        <button 
+                           className="btn btn-primary btn-sm flex items-center gap-2"
+                           onClick={() => simulateRouteCalculation(resource.id)}
+                           disabled={calculatingRoute === resource.id}
+                        >
+                           {calculatingRoute === resource.id ? (
+                              <span className="animate-pulse">Finding Path...</span>
+                           ) : (
+                              <> <Route size={14} /> View Path </>
+                           )}
+                        </button>
+                      </div>
+                    </div>
+                   );
+                })}
+              </div>
             </div>
           )}
         </main>
