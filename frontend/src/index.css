@@ -1,0 +1,391 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== SATARKMITRA DESIGN SYSTEM =====
+   Emergency-focused flood monitoring dashboard
+   Deep navy base, vibrant risk colors, glass-morphism
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+
+@layer base {
+  :root {
+    /* Core palette - Deep navy and slate */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary - Electric Blue */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    /* Secondary - Slate */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent - Cyan glow */
+    --accent: 199 89% 48%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Emergency Risk Colors */
+    --risk-critical: 0 84% 60%;
+    --risk-high: 25 95% 53%;
+    --risk-moderate: 48 96% 53%;
+    --risk-low: 142 71% 45%;
+
+    /* Special effects */
+    --glow-primary: 217 91% 60%;
+    --glow-cyan: 199 89% 48%;
+    --glass-bg: 222 47% 14%;
+
+    /* Sidebar */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 22%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .light {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 199 89% 48%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 85%;
+    --input: 214 32% 85%;
+    --ring: 217 91% 50%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 85%;
+    --sidebar-ring: 217 91% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary/30;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/40 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/60;
+  }
+}
+
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--card) / 0.8) 100%
+    );
+  }
+
+  /* Risk badges */
+  .badge-critical {
+    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .badge-high {
+    @apply bg-orange-500/20 text-orange-400 border border-orange-500/30;
+  }
+
+  .badge-moderate {
+    @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+  }
+
+  .badge-low {
+    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+  }
+
+  /* Light mode risk badges */
+  .light .badge-critical {
+    @apply bg-red-100 text-red-700 border-red-200;
+  }
+
+  .light .badge-high {
+    @apply bg-orange-100 text-orange-700 border-orange-200;
+  }
+
+  .light .badge-moderate {
+    @apply bg-yellow-100 text-yellow-700 border-yellow-200;
+  }
+
+  .light .badge-low {
+    @apply bg-green-100 text-green-700 border-green-200;
+  }
+
+  /* Risk progress bars */
+  .progress-critical {
+    @apply bg-gradient-to-r from-red-600 to-red-400;
+  }
+
+  .progress-high {
+    @apply bg-gradient-to-r from-orange-600 to-orange-400;
+  }
+
+  .progress-moderate {
+    @apply bg-gradient-to-r from-yellow-600 to-yellow-400;
+  }
+
+  .progress-low {
+    @apply bg-gradient-to-r from-green-600 to-green-400;
+  }
+
+  /* Status indicator pulse */
+  .status-pulse {
+    @apply relative;
+  }
+
+  .status-pulse::before {
+    content: '';
+    @apply absolute -inset-1 rounded-full animate-ping opacity-75;
+  }
+
+  .status-pulse.critical::before {
+    @apply bg-red-500;
+  }
+
+  .status-pulse.warning::before {
+    @apply bg-orange-500;
+  }
+
+  .status-pulse.safe::before {
+    @apply bg-green-500;
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
+                0 0 40px hsl(var(--primary) / 0.2),
+                0 0 60px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.3),
+                0 0 40px hsl(var(--accent) / 0.2);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 20px hsl(var(--destructive) / 0.4),
+                0 0 40px hsl(var(--destructive) / 0.2);
+  }
+
+  /* Hero gradient background */
+  .hero-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(217 91% 10%) 0%,
+      hsl(222 47% 11%) 50%,
+      hsl(199 89% 15%) 100%
+    );
+  }
+
+  /* Map container styles */
+  .map-container {
+    @apply rounded-xl overflow-hidden border border-border/50;
+  }
+
+  /* Tab active state */
+  .tab-active {
+    @apply bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg;
+  }
+
+  /* Zone card gradient borders */
+  .zone-card-critical {
+    @apply border-l-4 border-l-red-500 bg-gradient-to-r from-red-500/10 to-transparent;
+  }
+
+  .zone-card-high {
+    @apply border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-500/10 to-transparent;
+  }
+
+  .zone-card-moderate {
+    @apply border-l-4 border-l-yellow-500 bg-gradient-to-r from-yellow-500/10 to-transparent;
+  }
+
+  .zone-card-low {
+    @apply border-l-4 border-l-green-500 bg-gradient-to-r from-green-500/10 to-transparent;
+  }
+
+  /* Interactive button hover */
+  .btn-glow {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .btn-glow:hover {
+    @apply transform scale-[1.02];
+  }
+
+  .btn-glow::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--primary) / 0.2),
+      transparent
+    );
+  }
+
+  .btn-glow:hover::after {
+    @apply opacity-100;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Live indicator */
+  .live-indicator {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold;
+    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+  }
+
+  .live-indicator::before {
+    content: '';
+    @apply w-2 h-2 rounded-full bg-green-500 animate-pulse;
+  }
+}
+
+@layer utilities {
+  /* Animations */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5); }
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Text gradients */
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary;
+  }
+
+  .text-gradient-danger {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-orange-500 to-red-500;
+  }
+
+  /* Leaflet map overrides */
+  .leaflet-container {
+    @apply rounded-xl;
+    background: hsl(var(--card)) !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    @apply rounded-xl shadow-xl;
+    background: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .leaflet-popup-tip {
+    background: hsl(var(--card)) !important;
+  }
+
+  .light .leaflet-container {
+    background: #f8fafc !important;
+  }
+
+  .light .leaflet-popup-content-wrapper {
+    background: white !important;
+    color: hsl(222 47% 11%) !important;
+  }
+
+  .light .leaflet-popup-tip {
+    background: white !important;
+  }
+}
