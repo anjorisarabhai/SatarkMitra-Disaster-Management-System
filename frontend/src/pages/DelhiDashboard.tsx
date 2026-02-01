@@ -25,21 +25,9 @@ import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
-
 // Lazy load the maps
 const DelhiHotspotMap = lazy(() => import("@/components/maps/DelhiHotspotMap"));
 const DelhiMapLegend = lazy(() => import("@/components/maps/DelhiMapLegend"));
-
-const mockZones: Zone[] = [
-  { zone_name: "Rohini Sector 15", latitude: 28.7341, longitude: 77.1025, risk_score: 75, risk_status: "CRITICAL", details: { elevation: 215, drainage: "Poor" } },
-  { zone_name: "Dwarka Sector 21", latitude: 28.5535, longitude: 77.0588, risk_score: 55, risk_status: "HIGH", details: { elevation: 220, drainage: "Moderate" } },
-  { zone_name: "Connaught Place", latitude: 28.6315, longitude: 77.2167, risk_score: 35, risk_status: "MODERATE", details: { elevation: 216, drainage: "Good" } },
-  { zone_name: "Lajpat Nagar", latitude: 28.5677, longitude: 77.2433, risk_score: 45, risk_status: "HIGH", details: { elevation: 214, drainage: "Moderate" } },
-  { zone_name: "Karol Bagh", latitude: 28.6514, longitude: 77.1906, risk_score: 25, risk_status: "MODERATE", details: { elevation: 218, drainage: "Good" } },
-  { zone_name: "Saket", latitude: 28.5244, longitude: 77.2066, risk_score: 15, risk_status: "LOW", details: { elevation: 222, drainage: "Good" } },
-  { zone_name: "Janakpuri", latitude: 28.6219, longitude: 77.0878, risk_score: 65, risk_status: "HIGH", details: { elevation: 212, drainage: "Poor" } },
-  { zone_name: "Pitampura", latitude: 28.6969, longitude: 77.1315, risk_score: 40, risk_status: "MODERATE", details: { elevation: 217, drainage: "Moderate" } },
-];
 
 const forecast = [
   { hour: "Now", value: 5 },
@@ -152,8 +140,12 @@ const translations = {
 
 export default function DelhiDashboard() {
   const navigate = useNavigate();
+
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [lang, setLang] = useState<"en" | "hi">("en");
-  const [zones] = useState<Zone[]>(mockZones);
   const [simulatedRain, setSimulatedRain] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [viewMode, setViewMode] = useState<"citizen" | "authority">("citizen");
@@ -161,7 +153,26 @@ export default function DelhiDashboard() {
   const [reportText, setReportText] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("map");
+
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/delhi/zones")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch zones");
+        return res.json();
+      })
+      .then((data) => {
+        setZones(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Backend not reachable");
+        setLoading(false);
+      });
+  }, []);
+
 
   const text = translations[lang];
 
