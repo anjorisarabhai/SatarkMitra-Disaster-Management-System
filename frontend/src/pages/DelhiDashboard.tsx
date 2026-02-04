@@ -241,27 +241,73 @@ export default function DelhiDashboard() {
     };
     return colors[status] || colors.LOW;
   };
+  
+  const submitCitizenReport = async () => {
+  if (!reportText.trim()) return;
 
-  const submitCitizenReport = () => {
-    if (!reportText) return;
-    if (!navigator.geolocation) {
-      alert("Location not supported on this device");
-      return;
-    }
-    setReportLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setReports((prev) => [...prev, { lat: latitude, lng: longitude, note: reportText }]);
+  if (!navigator.geolocation) {
+    alert("Location not supported on this device");
+    return;
+  }
+
+  setReportLoading(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/report", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "flood",
+            description: reportText,
+            latitude,
+            longitude,
+            source: "citizen",
+          }),
+        });
+
+        const data = await res.json();
+
+        // 🔍 Debug (keep for now, remove later)
+        console.log("Report API response:", data);
+
+        const verification =
+          data.verification_status ?? "pending";
+
+        alert(
+          `Report submitted ✅\nVerification: ${verification}`
+        );
+
+        // Update UI state
+        setReports((prev) => [
+          ...prev,
+          {
+            lat: latitude,
+            lng: longitude,
+            note: reportText,
+            verification,
+          },
+        ]);
+
         setReportText("");
-        setReportLoading(false);
-      },
-      () => {
-        alert("Location permission denied. Please allow location access.");
+      } catch (err) {
+        console.error("Report submission failed:", err);
+        alert("Failed to submit report. Please try again.");
+      } finally {
         setReportLoading(false);
       }
-    );
-  };
+    },
+    () => {
+      alert("Location permission denied.");
+      setReportLoading(false);
+    }
+  );
+};
 
   const criticalCount = simulatedZones.filter((z) => z.risk_status === "CRITICAL").length;
   const highCount = simulatedZones.filter((z) => z.risk_status === "HIGH").length;
