@@ -2,7 +2,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
 import os
 import requests
 import numpy as np
@@ -21,12 +20,12 @@ load_dotenv()
 
 app = FastAPI(
     title="SatarkMitra AI Backend",
-    version="1.2.0"
+    version="1.2.1"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],   # OK for dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,7 +37,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "ml_models")
 
 # =====================================================
-# 1. MONGODB SETUP (FINAL)
+# 1. MONGODB SETUP
 # =====================================================
 MONGO_URI = "mongodb://localhost:27017"
 mongo_client = MongoClient(MONGO_URI)
@@ -107,7 +106,7 @@ class CitizenReport(BaseModel):
     description: str = Field(..., min_length=5)
     latitude: float
     longitude: float
-    source: str = "citizen"
+    source: str = Field(default="citizen")
 
 # =====================================================
 # 5. HONEYPOT VERIFICATION ENGINE
@@ -123,14 +122,13 @@ SCAM_PATTERNS = [
     r"send money",
 ]
 
-def honeypot_analyze(text: str):
+def honeypot_verify_report(text: str) -> str:
     text = text.lower()
     matches = sum(1 for p in SCAM_PATTERNS if re.search(p, text))
 
-    trust_score = max(0.0, 1.0 - (matches * 0.2))
-    honeypot_flag = matches >= 2
-
-    return trust_score, honeypot_flag
+    if matches >= 2:
+        return "suspicious"
+    return "trusted"
 
 # =====================================================
 # 6. CORE ROUTES
@@ -215,7 +213,11 @@ def weather_by_location(lat: float = Query(...), lon: float = Query(...)):
     if not OPENWEATHER_API_KEY:
         raise HTTPException(status_code=500, detail="Missing OpenWeather API key")
 
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather"
+        f"?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+    )
+
     data = requests.get(url, timeout=5).json()
 
     return {
@@ -226,13 +228,13 @@ def weather_by_location(lat: float = Query(...), lon: float = Query(...)):
     }
 
 # -----------------------------------------------------
-# 🧠 CITIZEN REPORT + HONEYPOT STORAGE
+# 🧠 CITIZEN REPORT + HONEYPOT
 # -----------------------------------------------------
 @app.post("/api/report")
 def submit_report(report: CitizenReport):
-    trust_score, honeypot_flag = honeypot_analyze(report.description)
+    verification = honeypot_verify_report(report.description)
 
-    document = {
+    record = {
         "type": report.type,
         "description": report.description,
         "location": {
@@ -240,15 +242,14 @@ def submit_report(report: CitizenReport):
             "lon": report.longitude
         },
         "source": report.source,
-        "trust_score": round(trust_score, 2),
-        "honeypot_flag": honeypot_flag,
+        "verification_status": verification,
         "created_at": datetime.utcnow()
     }
 
-    citizen_reports.insert_one(document)
+    result = citizen_reports.insert_one(record)
 
     return {
-        "status": "stored",
-        "trust_score": document["trust_score"],
-        "honeypot_flag": honeypot_flag
+        "status": "received",
+        "verification_status": verification,
+        "report_id": str(result.inserted_id)
     }
