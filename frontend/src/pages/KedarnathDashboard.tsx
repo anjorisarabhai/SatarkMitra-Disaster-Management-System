@@ -133,25 +133,62 @@ export default function KedarnathDashboard() {
   const [newContact, setNewContact] = useState({ name: "", role: "", contact: "" });
 
   const handlePredict = async () => {
-    if (!riverLevel || !rainfall) {
-      alert("Please enter both values.");
-      return;
-    }
-    setLoading(true);
-    setPredictionResult(null);
+  if (!riverLevel || !rainfall) {
+    alert("Please enter both values.");
+    return;
+  }
 
-    // Simulate API call (replace with actual API)
-    setTimeout(() => {
-      const simulatedResult = {
-        alert_level: parseFloat(riverLevel) > 7 || parseFloat(rainfall) > 20 ? "HIGH" : "LOW",
-        flood_probability: Math.min(100, (parseFloat(riverLevel) * 8 + parseFloat(rainfall) * 2)).toFixed(1),
-        location: "Kedarnath Valley",
-      };
-      setPredictionResult(simulatedResult);
-      setKedarnathRisk(simulatedResult);
-      setLoading(false);
-    }, 1500);
-  };
+  setLoading(true);
+  setPredictionResult(null);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        river_level: parseFloat(riverLevel),
+        rainfall: parseFloat(rainfall),
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Prediction API failed");
+    }
+
+    const data = await res.json();
+
+    /**
+     * Backend returns:
+     * {
+     *   location: "Kedarnath",
+     *   alert_level: "HIGH" | "LOW",
+     *   gru_forecast: number,
+     *   tcn_forecast: number
+     * }
+     */
+
+    const floodProbability = Math.min(
+      100,
+      ((data.gru_forecast + data.tcn_forecast) / 2) * 100
+    ).toFixed(1);
+
+    const result = {
+      alert_level: data.alert_level,
+      flood_probability: floodProbability,
+      location: data.location,
+    };
+
+    setPredictionResult(result);
+    setKedarnathRisk(result);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to fetch prediction from server");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAddAlert = (e: React.FormEvent) => {
     e.preventDefault();
@@ -426,9 +463,6 @@ export default function KedarnathDashboard() {
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1">
                             Location: <strong>{predictionResult.location}</strong>
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Flood Probability: <strong>{predictionResult.flood_probability}%</strong>
                           </p>
                         </div>
                       </div>
