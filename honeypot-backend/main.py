@@ -4,19 +4,22 @@ from scam_detector import detect_scam
 from agent import engage_scammer
 from extractor import extract_entities
 
-app = FastAPI(title="Agentic HoneyPot – Scam Detection & Intelligence API")
+app = FastAPI(
+    title="Agentic HoneyPot – Scam Detection & Intelligence API",
+    version="1.0"
+)
 
 API_KEY = "honeypot-secret-key"
 
 @app.post("/analyze", response_model=ScamResponse)
 def analyze_message(
-    request: ScamRequest,
+    request: ScamRequest = ScamRequest(),
     x_api_key: str | None = Header(default=None),
     authorization: str | None = Header(default=None)
 ):
+    # ---------------- AUTH ----------------
     api_key = None
 
-    # Accept both header styles
     if x_api_key:
         api_key = x_api_key
     elif authorization and authorization.startswith("Bearer "):
@@ -25,6 +28,17 @@ def analyze_message(
     if api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    # --------- EMPTY REQUEST (Tester Fix) ---------
+    if not request.message:
+        return {
+            "scam_detected": False,
+            "confidence_score": 0.0,
+            "scam_category": "none",
+            "conversation_log": [],
+            "extracted_entities": {}
+        }
+
+    # --------------- DETECTION ---------------
     detection = detect_scam(request.message)
 
     if not detection["is_scam"]:
@@ -36,8 +50,10 @@ def analyze_message(
             "extracted_entities": {}
         }
 
+    # --------------- HONEYPOT FLOW ---------------
     agent_reply = engage_scammer(request.message)
 
+    # Mock scammer response (as per hackathon spec)
     simulated_scammer_reply = (
         "Send money to helpfund@upi or bank account 123456789012. "
         "More details at http://fake-relief.in"

@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import Optional, List, Dict
 
 class ScamRequest(BaseModel):
-    message: str
+    message: Optional[str] = ""
 
 class ScamResponse(BaseModel):
     scam_detected: bool

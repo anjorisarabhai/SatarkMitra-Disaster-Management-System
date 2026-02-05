@@ -8,13 +8,12 @@ SCAM_KEYWORDS = [
     "kyc",
     "click",
     "link",
-    "claim",
-    "help"
+    "claim"
 ]
 
 def detect_scam(message: str):
-    msg = message.lower()
-    hits = sum(word in msg for word in SCAM_KEYWORDS)
+    message = message.lower()
+    hits = sum(keyword in message for keyword in SCAM_KEYWORDS)
 
     return {
         "is_scam": hits >= 2,
