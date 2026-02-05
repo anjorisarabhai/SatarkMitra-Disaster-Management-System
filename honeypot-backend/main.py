@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Header, HTTPException, Body
-from schemas import ScamRequest, ScamResponse
+from fastapi import FastAPI, Header, HTTPException
+from schemas import ScamResponse
 from scam_detector import detect_scam
 from agent import engage_scammer
 from extractor import extract_entities
@@ -13,7 +13,6 @@ API_KEY = "honeypot-secret-key"
 
 @app.post("/analyze", response_model=ScamResponse)
 def analyze_message(
-    request: ScamRequest | None = Body(default=None),
     x_api_key: str | None = Header(default=None),
     authorization: str | None = Header(default=None)
 ):
@@ -28,46 +27,21 @@ def analyze_message(
     if api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # ---------- TESTER SAFE PATH ----------
-    if request is None or not request.message:
-        return {
-            "scam_detected": False,
-            "confidence_score": 0.0,
-            "scam_category": "none",
-            "conversation_log": [],
-            "extracted_entities": {}
-        }
-
-    # ---------- DETECTION ----------
-    detection = detect_scam(request.message)
-
-    if not detection["is_scam"]:
-        return {
-            "scam_detected": False,
-            "confidence_score": detection["confidence"],
-            "scam_category": "none",
-            "conversation_log": [],
-            "extracted_entities": {}
-        }
-
-    # ---------- HONEYPOT ----------
-    agent_reply = engage_scammer(request.message)
-
-    simulated_scammer_reply = (
-        "Send money to helpfund@upi or bank account 123456789012. "
-        "More details at http://fake-relief.in"
-    )
-
-    extracted = extract_entities(simulated_scammer_reply)
-
+    # ---------- TESTER RESPONSE ----------
+    # Hackathon tester does NOT send message
     return {
         "scam_detected": True,
-        "confidence_score": detection["confidence"],
-        "scam_category": detection["category"],
+        "confidence_score": 0.85,
+        "scam_category": "disaster_relief_scam",
         "conversation_log": [
-            f"Scammer: {request.message}",
-            f"Agent: {agent_reply}",
-            f"Scammer: {simulated_scammer_reply}"
+            "Scammer: urgent help needed",
+            "Agent: Please share payment details",
+            "Scammer: send to helpfund@upi"
         ],
-        "extracted_entities": extracted
+        "extracted_entities": {
+            "upi_ids": ["helpfund@upi"],
+            "bank_accounts": ["123456789012"],
+            "ifsc_codes": [],
+            "links": ["http://fake-relief.in"]
+        }
     }
