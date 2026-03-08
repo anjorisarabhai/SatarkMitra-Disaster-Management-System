@@ -25,7 +25,14 @@ import { ReportStatusTracker } from "@/components/emergency/ReportStatusTracker"
 import { SafeNavigationPanel } from "@/components/emergency/SafeNavigationPanel";
 import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
 import { AIExplanation } from "@/components/emergency/AIExplanation";
-import { AccessibilityToggle } from "@/components/emergency/AccessibilityToggle";
+import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+
+const SHELTERS = [
+  { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
+  { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
+  { name: "Relief Camp, Dwarka Sec 10", lat: 28.58, lng: 77.05, capacity: 300, occupancy: 120 },
+  { name: "Community Center, Rohini", lat: 28.72, lng: 77.11, capacity: 250, occupancy: 90 },
+];
 
 const MOCK_ALERTS = [
   { id: 1, type: "critical", title: "Flash Flood Warning", area: "Kedarnath Valley", time: "2 min ago", region: "Kedarnath" },
@@ -294,6 +301,21 @@ export default function CitizenDashboard() {
               <SafeNavigationPanel />
               <ShelterCapacityTracker />
             </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Navigation className="w-5 h-5 text-primary" /> Route to Shelter
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[400px] rounded-xl overflow-hidden">
+                  <ShelterRouteMap
+                    shelters={SHELTERS}
+                    center={[28.6139, 77.209]}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ── Maps Tab ── */}

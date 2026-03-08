@@ -23,6 +23,10 @@ import {
   MicOff,
   Camera,
   X,
+  Accessibility,
+  Type,
+  Volume2,
+  Languages,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +35,16 @@ import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
 import { fetchDelhiZones, type DelhiZone } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useAccessibility } from "@/contexts/AccessibilityContext";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
 
+const DELHI_SHELTERS = [
+  { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
+  { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
+  { name: "Relief Camp, Dwarka Sec 10", lat: 28.58, lng: 77.05, capacity: 300, occupancy: 120 },
+];
 
 // Lazy load the maps
 const DelhiHotspotMap = lazy(() => import("@/components/maps/DelhiHotspotMap"));
@@ -159,6 +172,7 @@ const translations = {
 
 export default function DelhiDashboard() {
   const navigate = useNavigate();
+  const { largeText, voiceAlerts, simpleLanguage, setLargeText, setVoiceAlerts, setSimpleLanguage } = useAccessibility();
   const [lang, setLang] = useState<"en" | "hi">("en");
   const [zones, setZones] = useState<Zone[]>(mockZones);
   const [simulatedRain, setSimulatedRain] = useState(0);
@@ -380,6 +394,44 @@ export default function DelhiDashboard() {
                   {text.authority}
                 </button>
               </div>
+
+              {/* Accessibility Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Accessibility className="w-4 h-4" />
+                    {(largeText || voiceAlerts || simpleLanguage) && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" align="end">
+                  <p className="text-sm font-semibold text-foreground mb-3">Accessibility</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Type className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Large Text</span>
+                      </div>
+                      <Switch checked={largeText} onCheckedChange={setLargeText} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Voice Alerts</span>
+                      </div>
+                      <Switch checked={voiceAlerts} onCheckedChange={setVoiceAlerts} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Languages className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Simple Language</span>
+                      </div>
+                      <Switch checked={simpleLanguage} onCheckedChange={setSimpleLanguage} />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               <LiveIndicator className="hidden md:flex" />
             </div>
@@ -872,6 +924,22 @@ export default function DelhiDashboard() {
             </div>
           </motion.div>
         )}
+
+        {/* Shelter Route + Accessibility */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 glass-card overflow-hidden">
+            <div className="p-4 border-b border-border/50">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Navigate to Shelter
+              </h2>
+              <p className="text-sm text-muted-foreground">Click a shelter marker or use "Nearest Shelter" button</p>
+            </div>
+            <div className="h-[400px]">
+              <ShelterRouteMap shelters={DELHI_SHELTERS} center={[28.6139, 77.209]} />
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

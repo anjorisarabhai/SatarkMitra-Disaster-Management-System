@@ -21,6 +21,10 @@ import {
   ArrowLeft,
   Mic,
   MicOff,
+  Accessibility,
+  Type,
+  Volume2,
+  Languages,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +42,16 @@ import KedarnathLeafletMap from "@/components/maps/KedarnathLeafletMap";
 import CitizenReportTab from "@/components/kedarnath/CitizenReportTab";
 import { predictKedarnath } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useAccessibility } from "@/contexts/AccessibilityContext";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+
+const KEDARNATH_SHELTERS = [
+  { name: "Govt. Primary School Shelter", lat: 30.72, lng: 79.05, capacity: 150, occupancy: 45, status: "Open" },
+  { name: "Community Hall Shelter", lat: 30.68, lng: 79.07, capacity: 250, occupancy: 200, status: "Open" },
+  { name: "Old Temple Guesthouse", lat: 30.656, lng: 79.091, capacity: 80, occupancy: 80, status: "Full" },
+];
 
 // Mock data
 const initialMockAlerts = [
@@ -117,6 +131,7 @@ interface Protocol {
 
 export default function KedarnathDashboard() {
   const navigate = useNavigate();
+  const { largeText, voiceAlerts, simpleLanguage, setLargeText, setVoiceAlerts, setSimpleLanguage } = useAccessibility();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [kedarnathRisk, setKedarnathRisk] = useState<any>(null);
@@ -263,7 +278,46 @@ export default function KedarnathDashboard() {
                 </p>
               </div>
             </div>
-            <LiveIndicator />
+            <div className="flex items-center gap-3">
+              {/* Accessibility Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Accessibility className="w-4 h-4" />
+                    {(largeText || voiceAlerts || simpleLanguage) && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" align="end">
+                  <p className="text-sm font-semibold text-foreground mb-3">Accessibility</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Type className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Large Text</span>
+                      </div>
+                      <Switch checked={largeText} onCheckedChange={setLargeText} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Voice Alerts</span>
+                      </div>
+                      <Switch checked={voiceAlerts} onCheckedChange={setVoiceAlerts} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Languages className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">Simple Language</span>
+                      </div>
+                      <Switch checked={simpleLanguage} onCheckedChange={setSimpleLanguage} />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <LiveIndicator />
+            </div>
           </div>
 
           {/* Tabs */}
@@ -659,7 +713,8 @@ export default function KedarnathDashboard() {
             </div>
           )}
 
-          {/* Resources Tab */}
+
+          {/* Shelter Navigation */}
           {activeTab === "resources" && (
             <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
               <div className="text-center">
@@ -707,25 +762,25 @@ export default function KedarnathDashboard() {
 
                       <div className="flex items-center justify-between pt-4 border-t border-border/50">
                         <RiskBadge level={isFull ? "critical" : "low"}>{resource.status}</RiskBadge>
-                        <Button
-                          size="sm"
-                          onClick={() => simulateRouteCalculation(resource.id)}
-                          disabled={calculatingRoute === resource.id}
-                        >
-                          {calculatingRoute === resource.id ? (
-                            "Finding Path..."
-                          ) : (
-                            <>
-                              <Route className="w-4 h-4 mr-2" />
-                              View Path
-                            </>
-                          )}
-                        </Button>
                       </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Shelter Route Map */}
+              <div className="glass-card overflow-hidden">
+                <div className="p-4 border-b border-border/50">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Route className="w-5 h-5 text-primary" /> Navigate to Shelter
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Click a shelter or use "Nearest Shelter" for directions</p>
+                </div>
+                <div className="h-[400px]">
+                  <ShelterRouteMap shelters={KEDARNATH_SHELTERS} center={[30.735, 79.066]} zoom={13} />
+                </div>
+              </div>
+
             </div>
           )}
       </main>

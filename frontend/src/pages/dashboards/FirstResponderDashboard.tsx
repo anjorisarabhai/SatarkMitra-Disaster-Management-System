@@ -22,6 +22,14 @@ import { useToast } from "@/hooks/use-toast";
 import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
 import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
 import { AlertTimeline } from "@/components/emergency/AlertTimeline";
+import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+
+const RESPONDER_SHELTERS = [
+  { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
+  { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
+  { name: "Relief Camp, Dwarka Sec 10", lat: 28.58, lng: 77.05, capacity: 300, occupancy: 120 },
+  { name: "Community Center, Rohini", lat: 28.72, lng: 77.11, capacity: 250, occupancy: 90 },
+];
 
 
 /* ── Mock distress reports with AI-assigned priority ── */
@@ -444,6 +452,25 @@ export default function FirstResponderDashboard() {
           <ShelterCapacityTracker />
           <AlertTimeline />
         </div>
+
+        {/* Shelter Route Map */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MapPin className="w-5 h-5 text-primary" /> Route to Shelter
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] rounded-xl overflow-hidden">
+                <ShelterRouteMap
+                  shelters={RESPONDER_SHELTERS}
+                  center={[28.6139, 77.209]}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </main>
     </div>
   );
