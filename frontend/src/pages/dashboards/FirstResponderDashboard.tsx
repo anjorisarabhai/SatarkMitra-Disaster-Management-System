@@ -19,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
+import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
+import { AlertTimeline } from "@/components/emergency/AlertTimeline";
+
 
 /* ── Mock distress reports with AI-assigned priority ── */
 interface DistressReport {
@@ -241,6 +245,7 @@ export default function FirstResponderDashboard() {
       <DashboardHeader />
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
@@ -387,6 +392,11 @@ export default function FirstResponderDashboard() {
               </Card>
             </motion.div>
 
+            {/* Resource Availability */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+              <ResourceAvailability />
+            </motion.div>
+
             {/* Response Teams */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
               <Card>
@@ -427,6 +437,12 @@ export default function FirstResponderDashboard() {
               </Card>
             </motion.div>
           </div>
+        </div>
+
+        {/* Shelter Capacity + Alert Timeline */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ShelterCapacityTracker />
+          <AlertTimeline />
         </div>
       </main>
     </div>

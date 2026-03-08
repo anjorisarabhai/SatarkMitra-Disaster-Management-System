@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Shield, LogOut, Mountain, Building2, LayoutDashboard } from "lucide-react";
+import { Shield, LogOut, Mountain, Building2, LayoutDashboard, Accessibility, Type, Volume2, Languages } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getRoleLabel, getRoleDashboardPath } from "@/lib/roles";
 
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { largeText, voiceAlerts, simpleLanguage, setLargeText, setVoiceAlerts, setSimpleLanguage } = useAccessibility();
 
   const handleLogout = () => {
     logout();
@@ -53,6 +59,46 @@ export default function DashboardHeader() {
               {user.name} · {getRoleLabel(user.role)}
             </span>
           )}
+
+          {/* Accessibility Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Accessibility className="w-4 h-4" />
+                {(largeText || voiceAlerts || simpleLanguage) && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="end">
+              <p className="text-sm font-semibold text-foreground mb-3">Accessibility</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Type className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Large Text</span>
+                  </div>
+                  <Switch checked={largeText} onCheckedChange={setLargeText} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Voice Alerts</span>
+                  </div>
+                  <Switch checked={voiceAlerts} onCheckedChange={setVoiceAlerts} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Languages className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Simple Language</span>
+                  </div>
+                  <Switch checked={simpleLanguage} onCheckedChange={setSimpleLanguage} />
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="w-4 h-4" />
           </Button>

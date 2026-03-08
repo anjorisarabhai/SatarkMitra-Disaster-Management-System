@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
+import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
+
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -147,6 +150,7 @@ export default function ControlRoomDashboard() {
       <DashboardHeader />
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        
         {/* Title */}
         <div className="flex items-center justify-between">
           <div>
@@ -335,6 +339,12 @@ export default function ControlRoomDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Resources + Shelter */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ResourceAvailability />
+          <ShelterCapacityTracker />
+        </div>
       </main>
     </div>
   );

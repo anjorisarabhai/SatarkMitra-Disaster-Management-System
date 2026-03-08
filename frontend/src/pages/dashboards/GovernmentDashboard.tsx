@@ -18,6 +18,10 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from "recharts";
+import { RiskPulseWidget } from "@/components/emergency/RiskPulseWidget";
+import { AIExplanation } from "@/components/emergency/AIExplanation";
+import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
+
 
 /* ── mock data ── */
 const waterLevelData = [
@@ -105,6 +109,7 @@ export default function GovernmentDashboard() {
       <DashboardHeader />
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        
         {/* Title */}
         <div className="flex items-center justify-between">
           <div>
@@ -303,6 +308,15 @@ export default function GovernmentDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Risk Pulse + Resources + AI Explanation */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <RiskPulseWidget region="Kedarnath" />
+          <ResourceAvailability />
+          <div className="space-y-4">
+            <AIExplanation />
+          </div>
+        </div>
       </main>
     </div>
   );
