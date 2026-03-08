@@ -19,6 +19,10 @@ import {
   Building2,
   Radio,
   ArrowLeft,
+  Mic,
+  MicOff,
+  Camera,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +30,8 @@ import { RiskBadge } from "@/components/ui/RiskBadge";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
 import { fetchDelhiZones, type DelhiZone } from "@/lib/api";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+
 
 // Lazy load the maps
 const DelhiHotspotMap = lazy(() => import("@/components/maps/DelhiHotspotMap"));
@@ -162,7 +168,17 @@ export default function DelhiDashboard() {
   const [reportText, setReportText] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("map");
+  const [reportImages, setReportImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Voice input for report
+  const { isListening, toggle: toggleMic, isSupported: micSupported } = useSpeechRecognition({
+    onResult: (transcript) => {
+      setReportText((prev) => (prev ? prev + " " + transcript : transcript));
+    },
+  });
 
   const text = translations[lang];
 
@@ -251,18 +267,42 @@ export default function DelhiDashboard() {
     return colors[status] || colors.LOW;
   };
 
+  const handleReportImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const imageFiles = files.filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+    setReportImages(prev => [...prev, ...imageFiles]);
+    imageFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => setImagePreviews(prev => [...prev, ev.target?.result as string]);
+      reader.readAsDataURL(file);
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeReportImage = (idx: number) => {
+    setReportImages(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const submitCitizenReport = () => {
-    if (!reportText) return;
+    if (!reportText && reportImages.length === 0) return;
     if (!navigator.geolocation) {
       alert("Location not supported on this device");
       return;
     }
     setReportLoading(true);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setReports((prev) => [...prev, { lat: latitude, lng: longitude, note: reportText }]);
+        const note = reportImages.length > 0
+          ? `${reportText}\n[${reportImages.length} image(s) attached]`
+          : reportText;
+        setReports((prev) => [...prev, { lat: latitude, lng: longitude, note }]);
         setReportText("");
+        setReportImages([]);
+        setImagePreviews([]);
         setReportLoading(false);
       },
       () => {
@@ -653,29 +693,71 @@ export default function DelhiDashboard() {
               <div className="p-5 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">{text.descLabel}</label>
-                  <Input
-                    placeholder={text.placeholder}
-                    value={reportText}
-                    onChange={(e) => setReportText(e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={isListening ? "🎤 Listening..." : text.placeholder}
+                      value={reportText}
+                      onChange={(e) => setReportText(e.target.value)}
+                      className="flex-1"
+                    />
+                    {micSupported && (
+                      <Button
+                        variant={isListening ? "destructive" : "outline"}
+                        size="icon"
+                        onClick={toggleMic}
+                        title={isListening ? "Stop" : "Speak"}
+                      >
+                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <Button
-                  disabled={reportLoading || !reportText}
-                  onClick={submitCitizenReport}
-                  className="w-full bg-gradient-to-r from-accent to-primary"
-                >
-                  {reportLoading ? (
-                    text.detecting
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      {text.submit}
-                    </>
-                  )}
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Your browser will ask for location permission
-                </p>
+
+                {/* Image previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {imagePreviews.map((src, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                        <img src={src} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => removeReportImage(i)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleReportImageSelect}
+                />
+
+                <div className="flex gap-2">
+                  <Button
+                    disabled={reportLoading || (!reportText && reportImages.length === 0)}
+                    onClick={submitCitizenReport}
+                    className="flex-1 bg-gradient-to-r from-accent to-primary"
+                  >
+                    {reportLoading ? (
+                      text.detecting
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        {text.submit}
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} title="Attach photo">
+                    <Camera className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 

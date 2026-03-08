@@ -18,6 +18,8 @@ import {
   Circle,
   Navigation,
   ArrowLeft,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,7 @@ import {
 
 import KedarnathLeafletMap from "@/components/maps/KedarnathLeafletMap";
 import { predictKedarnath } from "@/lib/api";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 // Mock data
 const initialMockAlerts = [
@@ -132,6 +135,21 @@ export default function KedarnathDashboard() {
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   const [newAlert, setNewAlert] = useState({ type: "info", title: "", location: "" });
   const [newContact, setNewContact] = useState({ name: "", role: "", contact: "" });
+
+  // Voice input for prediction fields
+  const { isListening, toggle: toggleMic, isSupported: micSupported } = useSpeechRecognition({
+    onResult: (transcript) => {
+      // Parse spoken numbers for river level / rainfall
+      const nums = transcript.match(/[\d.]+/g);
+      if (nums && nums.length >= 2) {
+        setRiverLevel(nums[0]);
+        setRainfall(nums[1]);
+      } else if (nums && nums.length === 1) {
+        if (!riverLevel) setRiverLevel(nums[0]);
+        else setRainfall(nums[0]);
+      }
+    },
+  });
 
   const handlePredict = async () => {
     if (!riverLevel || !rainfall) {
@@ -412,6 +430,20 @@ export default function KedarnathDashboard() {
                   <Button onClick={handlePredict} disabled={loading} className="w-full">
                     {loading ? "Analyzing Real-time Data..." : "Run Risk Analysis"}
                   </Button>
+
+                  {micSupported && (
+                    <Button
+                      variant={isListening ? "destructive" : "outline"}
+                      onClick={toggleMic}
+                      className="w-full"
+                    >
+                      {isListening ? (
+                        <><MicOff className="w-4 h-4 mr-2" /> Stop Listening</>
+                      ) : (
+                        <><Mic className="w-4 h-4 mr-2" /> Speak Values (e.g. "1.5 and 12")</>
+                      )}
+                    </Button>
+                  )}
 
                   {predictionResult && (
                     <div
