@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
+import { fetchDelhiZones, type DelhiZone } from "@/lib/api";
 
 // Lazy load the maps
 const DelhiHotspotMap = lazy(() => import("@/components/maps/DelhiHotspotMap"));
@@ -153,7 +154,7 @@ const translations = {
 export default function DelhiDashboard() {
   const navigate = useNavigate();
   const [lang, setLang] = useState<"en" | "hi">("en");
-  const [zones] = useState<Zone[]>(mockZones);
+  const [zones, setZones] = useState<Zone[]>(mockZones);
   const [simulatedRain, setSimulatedRain] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [viewMode, setViewMode] = useState<"citizen" | "authority">("citizen");
@@ -171,6 +172,25 @@ export default function DelhiDashboard() {
     { id: "report", label: text.tabs.report, icon: MessageSquarePlus },
     { id: "zones", label: text.tabs.zones, icon: LayoutGrid },
   ];
+
+  // Fetch Delhi zones from API on mount
+  useEffect(() => {
+    fetchDelhiZones()
+      .then((apiZones) => {
+        const mapped: Zone[] = apiZones.map((z) => ({
+          zone_name: z.zone_name,
+          latitude: z.latitude,
+          longitude: z.longitude,
+          risk_score: z.risk_score,
+          risk_status: z.risk_status,
+          details: z.details,
+        }));
+        setZones(mapped);
+      })
+      .catch((err) => {
+        console.warn("Delhi API unavailable, using mock data:", err.message);
+      });
+  }, []);
 
   useEffect(() => {
     if (!playing) return;

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 
 import KedarnathLeafletMap from "@/components/maps/KedarnathLeafletMap";
+import { predictKedarnath } from "@/lib/api";
 
 // Mock data
 const initialMockAlerts = [
@@ -140,8 +141,17 @@ export default function KedarnathDashboard() {
     setLoading(true);
     setPredictionResult(null);
 
-    // Simulate API call (replace with actual API)
-    setTimeout(() => {
+    try {
+      const result = await predictKedarnath(parseFloat(riverLevel), parseFloat(rainfall));
+      const enriched = {
+        ...result,
+        flood_probability: (Math.max(result.gru_forecast, result.tcn_forecast) * 100).toFixed(1),
+      };
+      setPredictionResult(enriched);
+      setKedarnathRisk(enriched);
+    } catch (err: any) {
+      console.error("Prediction API error:", err);
+      // Fallback to local simulation if backend is unavailable
       const simulatedResult = {
         alert_level: parseFloat(riverLevel) > 7 || parseFloat(rainfall) > 20 ? "HIGH" : "LOW",
         flood_probability: Math.min(100, (parseFloat(riverLevel) * 8 + parseFloat(rainfall) * 2)).toFixed(1),
@@ -149,8 +159,9 @@ export default function KedarnathDashboard() {
       };
       setPredictionResult(simulatedResult);
       setKedarnathRisk(simulatedResult);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleAddAlert = (e: React.FormEvent) => {

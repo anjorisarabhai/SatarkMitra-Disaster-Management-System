@@ -13,7 +13,9 @@ import KedarnathDashboard from "./pages/KedarnathDashboard";
 import DelhiDashboard from "./pages/DelhiDashboard";
 import CitizenDashboard from "./pages/dashboards/CitizenDashboard";
 import FirstResponderDashboard from "./pages/dashboards/FirstResponderDashboard";
-import PlaceholderDashboard from "./pages/dashboards/PlaceHolderDashboard";
+import GovernmentDashboard from "./pages/dashboards/GovernmentDashboard";
+import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import ControlRoomDashboard from "./pages/dashboards/ControlRoomDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,17 +49,17 @@ const App = () => (
             } />
             <Route path="/dashboard/government" element={
               <ProtectedRoute allowedRoles={["government"]}>
-                <PlaceholderDashboard />
+                <GovernmentDashboard />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/control-room" element={
               <ProtectedRoute allowedRoles={["control_room"]}>
-                <PlaceholderDashboard />
+                <ControlRoomDashboard />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/admin" element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <PlaceholderDashboard />
+                <AdminDashboard />
               </ProtectedRoute>
             } />
 
