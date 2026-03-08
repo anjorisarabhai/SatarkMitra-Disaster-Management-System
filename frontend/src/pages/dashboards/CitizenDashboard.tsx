@@ -14,6 +14,8 @@ import {
   X,
   ImageIcon,
 } from "lucide-react";
+import KedarnathLeafletMap from "@/components/maps/KedarnathLeafletMap";
+import DelhiHotspotMap from "@/components/maps/DelhiHotspotMap";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 
@@ -26,9 +28,12 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 
 const MOCK_ALERTS = [
-  { id: 1, type: "critical", title: "Flash Flood Warning", area: "Kedarnath Valley", time: "2 min ago" },
-  { id: 2, type: "high", title: "Heavy Rainfall Alert", area: "Mandakini Basin", time: "15 min ago" },
-  { id: 3, type: "moderate", title: "Water Level Rising", area: "Alaknanda River", time: "1 hr ago" },
+  { id: 1, type: "critical", title: "Flash Flood Warning", area: "Kedarnath Valley", time: "2 min ago", region: "Kedarnath" },
+  { id: 2, type: "high", title: "Heavy Rainfall Alert", area: "Mandakini Basin", time: "15 min ago", region: "Kedarnath" },
+  { id: 3, type: "moderate", title: "Water Level Rising", area: "Yamuna River, ITO", time: "30 min ago", region: "Delhi" },
+  { id: 4, type: "high", title: "Waterlogging Alert", area: "Minto Bridge, Delhi", time: "45 min ago", region: "Delhi" },
+  { id: 5, type: "moderate", title: "Drainage Overflow", area: "Lajpat Nagar, Delhi", time: "1 hr ago", region: "Delhi" },
+  { id: 6, type: "critical", title: "Glacial Lake Overflow Risk", area: "Chorabari Tal", time: "1 hr ago", region: "Kedarnath" },
 ];
 
 const EMERGENCY_CONTACTS = [
@@ -168,7 +173,10 @@ export default function CitizenDashboard() {
                       <p className="text-xs text-muted-foreground">{alert.area} • {alert.time}</p>
                     </div>
                   </div>
-                  <span className={riskBadge(alert.type)}>{alert.type.toUpperCase()}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">{alert.region}</span>
+                    <span className={riskBadge(alert.type)}>{alert.type.toUpperCase()}</span>
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -277,12 +285,23 @@ export default function CitizenDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Navigation className="w-5 h-5 text-accent" />
-                Navigate to Nearest Shelter
+                Live Maps — Delhi &amp; Kedarnath
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="aspect-video rounded-xl bg-secondary/50 border border-border/50 flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">Map integration will be connected to your backend</p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Delhi Flood Hotspots</p>
+                  <div className="aspect-video rounded-xl overflow-hidden border border-border/50">
+                    <DelhiHotspotMap />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Kedarnath Region</p>
+                  <div className="aspect-video rounded-xl overflow-hidden border border-border/50">
+                    <KedarnathLeafletMap />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
