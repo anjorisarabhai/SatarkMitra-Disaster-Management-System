@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Phone,
   ClipboardList,
+  FileText,
   Home,
   Shield,
   Check,
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 
 import KedarnathLeafletMap from "@/components/maps/KedarnathLeafletMap";
+import CitizenReportTab from "@/components/kedarnath/CitizenReportTab";
 import { predictKedarnath } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
@@ -84,6 +86,7 @@ const tabs = [
   { id: "dashboard", label: "Dashboard", icon: MapPin },
   { id: "water-levels", label: "Water Levels", icon: Activity },
   { id: "prediction", label: "AI Prediction", icon: Shield },
+  { id: "report", label: "Report", icon: FileText },
   { id: "alerts", label: "Alerts", icon: AlertTriangle },
   { id: "contacts", label: "Contacts", icon: Phone },
   { id: "protocols", label: "Protocols", icon: ClipboardList },
@@ -481,6 +484,9 @@ export default function KedarnathDashboard() {
               </div>
             </div>
           )}
+
+          {/* Report Tab */}
+          {activeTab === "report" && <CitizenReportTab />}
 
           {/* Alerts Tab */}
           {activeTab === "alerts" && (
