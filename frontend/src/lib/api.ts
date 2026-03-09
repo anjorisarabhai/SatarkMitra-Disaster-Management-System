@@ -80,6 +80,16 @@ export function checkHealth() {
   return apiFetch<{ status: string }>("/health");
 }
 
+// ── Fetch Citizen Reports ──
+
+export interface CitizenMapReport {
+  id: string
+  lat: number
+  lng: number
+  note: string
+  verification_status: string
+}
+
 export function fetchCitizenReports() {
-  return apiFetch("/api/reports");
+  return apiFetch<CitizenMapReport[]>("/api/reports")
 }

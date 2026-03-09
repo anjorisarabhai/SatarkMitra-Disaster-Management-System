@@ -70,9 +70,11 @@ export interface Zone {
 }
 
 export interface Report {
-  lat: number;
-  lng: number;
-  note: string;
+  id?: string;
+  lat?: number;
+  lng?: number;
+  note?: string;
+  verification_status?: string;
 }
 
 interface DelhiHotspotMapProps {
@@ -150,36 +152,29 @@ export default function DelhiHotspotMap({
       mapRef.current = null;
       markersRef.current = [];
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update markers when zones/reports/lang change
+  // Update markers
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // Clear existing markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    // Add zone markers
+    // Zone markers
     zones.forEach((zone) => {
       const nearest = getNearestShelter(zone);
+
       const marker = L.marker([zone.latitude, zone.longitude], {
         icon: createIcon(getMarkerColor(zone.risk_status)),
       }).addTo(map);
 
-      // Tooltip
       marker.bindTooltip(
         `<div class="text-xs"><b>${zone.zone_name}</b><br />${text.risk}: ${zone.risk_status}<br />${text.score}: ${zone.risk_score}</div>`,
         { direction: "top", offset: [0, -20] }
       );
 
-      // Popup
-      const avoidHtml =
-        zone.risk_status !== "LOW"
-          ? `<p class="text-destructive text-xs mt-2 font-medium">${text.avoidWarning}</p>`
-          : "";
       marker.bindPopup(
         `<div class="text-sm">
           <b class="text-base">${zone.zone_name}</b><br />
@@ -190,39 +185,42 @@ export default function DelhiHotspotMap({
           <hr class="my-2" />
           🧭 <b>${text.nearestShelter}</b><br />
           ${nearest.name}
-          ${avoidHtml}
         </div>`
       );
 
       marker.on("click", () => onZoneClick?.(zone.zone_name));
-
       markersRef.current.push(marker);
     });
 
-    // Add shelter markers
+    // Shelter markers
     shelters.forEach((s) => {
       const marker = L.marker([s.lat, s.lng], {
         icon: createIcon("blue"),
       }).addTo(map);
 
-      marker.bindTooltip(
-        `<div class="text-xs">🧭 <b>${text.safeShelter}</b><br />${s.name}</div>`,
-        { direction: "top", offset: [0, -20] }
-      );
-
       marker.bindPopup(
         `<div class="text-sm">
           <b>${text.emergencyShelter}</b><br />
-          ${s.name}<br />
-          <span class="text-risk-low font-medium">${text.safeLocation}</span>
+          ${s.name}
         </div>`
       );
 
       markersRef.current.push(marker);
     });
 
-    // Add citizen report markers
+    // Citizen reports (SAFE VERSION)
     reports.forEach((r) => {
+
+      if (
+        typeof r.lat !== "number" ||
+        typeof r.lng !== "number" ||
+        isNaN(r.lat) ||
+        isNaN(r.lng)
+      ) {
+        console.warn("Invalid report skipped:", r);
+        return;
+      }
+
       const marker = L.marker([r.lat, r.lng], {
         icon: createIcon("violet"),
       }).addTo(map);
@@ -236,6 +234,7 @@ export default function DelhiHotspotMap({
 
       markersRef.current.push(marker);
     });
+
   }, [zones, reports, text, onZoneClick]);
 
   return <div ref={containerRef} className="h-full w-full rounded-xl" />;

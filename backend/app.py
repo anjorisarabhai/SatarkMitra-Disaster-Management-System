@@ -286,3 +286,26 @@ def get_reports():
         r["_id"] = str(r["_id"])
 
     return reports
+
+# -----------------------------------------------------
+# GET ALL CITIZEN REPORTS (for map visualization)
+# -----------------------------------------------------
+
+@app.get("/api/reports")
+def get_reports():
+
+    reports = []
+
+    cursor = citizen_reports.find().sort("created_at", -1).limit(200)
+
+    for r in cursor:
+        reports.append({
+            "id": str(r["_id"]),
+            "lat": r["location"]["lat"],
+            "lng": r["location"]["lon"],
+            "note": r.get("description", ""),
+            "verification_status": r.get("verification_status", "trusted"),
+            "created_at": r["created_at"]
+        })
+
+    return reports

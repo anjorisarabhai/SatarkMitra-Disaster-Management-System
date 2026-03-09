@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
-import { fetchDelhiZones, type DelhiZone, submitReport } from "@/lib/api";
+import { fetchDelhiZones, type DelhiZone, submitReport, fetchCitizenReports } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -174,7 +174,7 @@ export default function DelhiDashboard() {
   const navigate = useNavigate();
   const { largeText, voiceAlerts, simpleLanguage, setLargeText, setVoiceAlerts, setSimpleLanguage } = useAccessibility();
   const [lang, setLang] = useState<"en" | "hi">("en");
-  const [zones, setZones] = useState<Zone[]>(mockZones);
+  const [zones, setZones] = useState<Zone[]>([]);
   const [simulatedRain, setSimulatedRain] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [viewMode, setViewMode] = useState<"citizen" | "authority">("citizen");
@@ -205,22 +205,32 @@ export default function DelhiDashboard() {
 
   // Fetch Delhi zones from API on mount
   useEffect(() => {
-    fetchDelhiZones()
-      .then((apiZones) => {
-        const mapped: Zone[] = apiZones.map((z) => ({
-          zone_name: z.zone_name,
-          latitude: z.latitude,
-          longitude: z.longitude,
-          risk_score: z.risk_score,
-          risk_status: z.risk_status,
-          details: z.details,
-        }));
-        setZones(mapped);
-      })
-      .catch((err) => {
-        console.warn("Delhi API unavailable, using mock data:", err.message);
-      });
-  }, []);
+  fetchDelhiZones()
+    .then((apiZones) => {
+
+      const mapped: Zone[] = apiZones.map((z) => ({
+        zone_name: z.zone_name,
+        latitude: z.latitude,
+        longitude: z.longitude,
+        risk_score: z.risk_score,
+        risk_status: z.risk_status,
+
+        // SAFE details fallback
+        details: {
+          elevation: z.details?.elevation ?? 0,
+          drainage: z.details?.drainage ?? "Unknown",
+        },
+      }));
+
+      setZones(mapped);
+    })
+    .catch((err) => {
+      console.warn("Delhi API unavailable, using mock data:", err.message);
+
+      // fallback to mock zones
+      setZones(mockZones);
+    });
+}, []);
 
   useEffect(() => {
     if (!playing) return;
@@ -229,6 +239,36 @@ export default function DelhiDashboard() {
     }, 800);
     return () => clearInterval(interval);
   }, [playing]);
+
+  // Fetch citizen reports from backend (live map markers)
+useEffect(() => {
+
+  const loadReports = async () => {
+    try {
+      const data = await fetchCitizenReports();
+
+const mappedReports: Report[] = (data || [])
+  .map((r: any) => ({
+    lat: r.lat ?? r.latitude,
+    lng: r.lng ?? r.longitude,
+    note: r.note ?? r.description ?? "Flood report",
+  }))
+  .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
+
+setReports(mappedReports);
+    } catch (err) {
+      console.warn("Failed to load citizen reports:", err);
+    }
+  };
+
+  loadReports();
+
+  // refresh every 8 seconds for live updates
+  const interval = setInterval(loadReports, 8000);
+
+  return () => clearInterval(interval);
+
+}, []);
 
   const applyRainSimulation = (zone: Zone): Zone => {
     let score = zone.risk_score;
