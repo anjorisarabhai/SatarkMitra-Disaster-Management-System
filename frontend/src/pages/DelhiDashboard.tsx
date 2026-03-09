@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
 import type { Zone, Report } from "@/components/maps/DelhiHotspotMap";
-import { fetchDelhiZones, type DelhiZone } from "@/lib/api";
+import { fetchDelhiZones, type DelhiZone, submitReport } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -299,32 +299,61 @@ export default function DelhiDashboard() {
     setImagePreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const submitCitizenReport = () => {
-    if (!reportText && reportImages.length === 0) return;
-    if (!navigator.geolocation) {
-      alert("Location not supported on this device");
-      return;
-    }
-    setReportLoading(true);
+  const submitCitizenReport = async () => {
+  if (!reportText && reportImages.length === 0) return;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const note = reportImages.length > 0
+  if (!navigator.geolocation) {
+    alert("Location not supported on this device");
+    return;
+  }
+
+  setReportLoading(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+
+      const description =
+        reportImages.length > 0
           ? `${reportText}\n[${reportImages.length} image(s) attached]`
           : reportText;
-        setReports((prev) => [...prev, { lat: latitude, lng: longitude, note }]);
-        setReportText("");
-        setReportImages([]);
-        setImagePreviews([]);
-        setReportLoading(false);
-      },
-      () => {
-        alert("Location permission denied. Please allow location access.");
-        setReportLoading(false);
+
+      try {
+        const result = await submitReport({
+          type: "flood",
+          description,
+          latitude,
+          longitude,
+        });
+
+        // Show locally on map
+        setReports((prev) => [
+          ...prev,
+          { lat: latitude, lng: longitude, note: description },
+        ]);
+
+        alert(
+          result.verification_status === "trusted"
+            ? "Report submitted successfully"
+            : "Report submitted and under verification"
+        );
+
+      } catch (err) {
+        console.error("Report failed", err);
+        alert("Report submission failed");
       }
-    );
-  };
+
+      setReportText("");
+      setReportImages([]);
+      setImagePreviews([]);
+      setReportLoading(false);
+    },
+    () => {
+      alert("Location permission denied. Please allow location access.");
+      setReportLoading(false);
+    }
+  );
+};
 
   const criticalCount = simulatedZones.filter((z) => z.risk_status === "CRITICAL").length;
   const highCount = simulatedZones.filter((z) => z.risk_status === "HIGH").length;
