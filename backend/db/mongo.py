@@ -1,16 +1,9 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
+from pymongo import MongoClient
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = "satarkmitra"
+MONGO_URI = "mongodb://localhost:27017"
 
-client: AsyncIOMotorClient | None = None
+mongo_client = MongoClient(MONGO_URI)
 
-def get_client():
-    global client
-    if client is None:
-        client = AsyncIOMotorClient(MONGO_URI)
-    return client
+db = mongo_client["satarkmitra"]
 
-def get_db():
-    return get_client()[DB_NAME]
+citizen_reports = db["citizen_reports"]

@@ -79,3 +79,7 @@ export function submitReport(data: {
 export function checkHealth() {
   return apiFetch<{ status: string }>("/health");
 }
+
+export function fetchCitizenReports() {
+  return apiFetch("/api/reports");
+}
