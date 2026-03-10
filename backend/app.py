@@ -23,7 +23,7 @@ load_dotenv()
 
 app = FastAPI(
     title="SatarkMitra AI Backend",
-    version="1.4.0"
+    version="1.5.0"
 )
 
 app.add_middleware(
@@ -75,15 +75,33 @@ tcn_model = safe_load_tf(os.path.join(MODEL_DIR, "tcn_standalone_model.h5"), "TC
 delhi_model = safe_load_joblib(os.path.join(MODEL_DIR, "drainage_risk_model.pkl"), "Delhi Drainage Model")
 
 # =====================================================
-# DELHI ZONES
+# GENERATE DELHI MICRO HOTSPOTS (2500+)
 # =====================================================
 
-DELHI_ZONES = [
-    {"name": "Minto Bridge", "lat": 28.6327, "lon": 77.2197, "elevation": 208, "drainage": "POOR"},
-    {"name": "ITO Junction", "lat": 28.6289, "lon": 77.2413, "elevation": 210, "drainage": "MODERATE"},
-    {"name": "Okhla Underpass", "lat": 28.5367, "lon": 77.2714, "elevation": 212, "drainage": "POOR"},
-    {"name": "Civil Lines", "lat": 28.6816, "lon": 77.2281, "elevation": 218, "drainage": "GOOD"},
-]
+def generate_delhi_hotspots():
+
+    lat_min, lat_max = 28.40, 28.88
+    lon_min, lon_max = 76.84, 77.35
+
+    step = 0.01  # ~1 km grid
+
+    hotspots = []
+
+    for lat in np.arange(lat_min, lat_max, step):
+        for lon in np.arange(lon_min, lon_max, step):
+
+            hotspots.append({
+                "name": f"Cell_{round(lat,3)}_{round(lon,3)}",
+                "lat": float(lat),
+                "lon": float(lon),
+                "elevation": 210,
+                "drainage": "MODERATE"
+            })
+
+    return hotspots
+
+
+DELHI_ZONES = generate_delhi_hotspots()
 
 # =====================================================
 # IMPROVED SCAM DETECTION ENGINE
@@ -168,7 +186,7 @@ def predict_kedarnath(data: dict):
 
 
 # =====================================================
-# DELHI ZONES RISK
+# DELHI MICRO HOTSPOT RISK ENGINE
 # =====================================================
 
 @app.get("/api/delhi/zones")
@@ -177,16 +195,7 @@ def delhi_zones():
     if delhi_model is None:
         raise HTTPException(status_code=503, detail="Delhi ML model not loaded")
 
-    X = pd.DataFrame([{
-        "river_water_area_sqkm": 6.5,
-        "upstream_runoff_mm": 1.2,
-        "rainfall_mm": 60,
-        "ggn_runoff_mm": 0.9,
-        "ggn_rainfall_mm": 55,
-        "month": 7
-    }])
-
-    score = float(delhi_model.predict(X)[0])
+    results = []
 
     def status(s):
         if s >= 30:
@@ -197,13 +206,31 @@ def delhi_zones():
             return "MODERATE"
         return "LOW"
 
-    return [{
-        "zone_name": z["name"],
-        "latitude": z["lat"],
-        "longitude": z["lon"],
-        "risk_score": round(score, 2),
-        "risk_status": status(score)
-    } for z in DELHI_ZONES]
+    for z in DELHI_ZONES:
+
+        rainfall = np.random.uniform(40, 90)
+        runoff = np.random.uniform(0.8, 1.5)
+
+        X = pd.DataFrame([{
+            "river_water_area_sqkm": 6.5,
+            "upstream_runoff_mm": runoff,
+            "rainfall_mm": rainfall,
+            "ggn_runoff_mm": runoff * 0.8,
+            "ggn_rainfall_mm": rainfall * 0.9,
+            "month": 7
+        }])
+
+        score = float(delhi_model.predict(X)[0])
+
+        results.append({
+            "zone_name": z["name"],
+            "latitude": z["lat"],
+            "longitude": z["lon"],
+            "risk_score": round(score, 2),
+            "risk_status": status(score)
+        })
+
+    return results
 
 
 # =====================================================
@@ -257,8 +284,6 @@ def submit_report(report: CitizenReport):
 
         result = citizen_reports.insert_one(record)
 
-        print("Report saved:", record)
-
         return {
             "status": "received",
             "verification_status": verification,
@@ -267,29 +292,13 @@ def submit_report(report: CitizenReport):
         }
 
     except Exception as e:
-
         print("ERROR saving report:", e)
-
         raise HTTPException(status_code=500, detail="Report failed")
 
 
 # =====================================================
-# FETCH REPORTS FOR DASHBOARDS
+# FETCH REPORTS (FOR MAP)
 # =====================================================
-
-@app.get("/api/reports")
-def get_reports():
-
-    reports = list(citizen_reports.find().sort("created_at", -1))
-
-    for r in reports:
-        r["_id"] = str(r["_id"])
-
-    return reports
-
-# -----------------------------------------------------
-# GET ALL CITIZEN REPORTS (for map visualization)
-# -----------------------------------------------------
 
 @app.get("/api/reports")
 def get_reports():
