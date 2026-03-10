@@ -186,6 +186,10 @@ export default function DelhiDashboard() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [selectedRisk, setSelectedRisk] = useState("ALL");
+  const [selectedZone, setSelectedZone] = useState("ALL");
+  const [riskRange, setRiskRange] = useState("ALL");
+  const [zonesLoading, setZonesLoading] = useState(true);
 
   // Voice input for report
   const { isListening, toggle: toggleMic, isSupported: micSupported } = useSpeechRecognition({
@@ -205,32 +209,31 @@ export default function DelhiDashboard() {
 
   // Fetch Delhi zones from API on mount
   useEffect(() => {
-  fetchDelhiZones()
-    .then((apiZones) => {
+    setZonesLoading(true);
 
-      const mapped: Zone[] = apiZones.map((z) => ({
-        zone_name: z.zone_name,
-        latitude: z.latitude,
-        longitude: z.longitude,
-        risk_score: z.risk_score,
-        risk_status: z.risk_status,
+    fetchDelhiZones()
+      .then((apiZones) => {
+        const mapped: Zone[] = apiZones.map((z) => ({
+          zone_name: z.zone_name,
+          latitude: z.latitude,
+          longitude: z.longitude,
+          risk_score: z.risk_score,
+          risk_status: z.risk_status,
+          details: {
+            elevation: z.details?.elevation ?? 0,
+            drainage: z.details?.drainage ?? "Unknown",
+          },
+        }));
 
-        // SAFE details fallback
-        details: {
-          elevation: z.details?.elevation ?? 0,
-          drainage: z.details?.drainage ?? "Unknown",
-        },
-      }));
-
-      setZones(mapped);
-    })
-    .catch((err) => {
-      console.warn("Delhi API unavailable, using mock data:", err.message);
-
-      // fallback to mock zones
-      setZones(mockZones);
-    });
-}, []);
+        setZones(mapped);
+        setZonesLoading(false);
+      })
+      .catch((err) => {
+        console.warn("Delhi API unavailable, using mock data:", err.message);
+        setZones(mockZones);
+        setZonesLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (!playing) return;
@@ -241,34 +244,30 @@ export default function DelhiDashboard() {
   }, [playing]);
 
   // Fetch citizen reports from backend (live map markers)
-useEffect(() => {
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const data = await fetchCitizenReports();
+        const mappedReports: Report[] = (data || [])
+          .map((r: any) => ({
+            lat: r.lat ?? r.latitude,
+            lng: r.lng ?? r.longitude,
+            note: r.note ?? r.description ?? "Flood report",
+          }))
+          .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
+        setReports(mappedReports);
+      } catch (err) {
+        console.warn("Failed to load citizen reports:", err);
+      }
+    };
 
-  const loadReports = async () => {
-    try {
-      const data = await fetchCitizenReports();
+    loadReports();
 
-const mappedReports: Report[] = (data || [])
-  .map((r: any) => ({
-    lat: r.lat ?? r.latitude,
-    lng: r.lng ?? r.longitude,
-    note: r.note ?? r.description ?? "Flood report",
-  }))
-  .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
+    // refresh every 8 seconds for live updates
+    const interval = setInterval(loadReports, 8000);
 
-setReports(mappedReports);
-    } catch (err) {
-      console.warn("Failed to load citizen reports:", err);
-    }
-  };
-
-  loadReports();
-
-  // refresh every 8 seconds for live updates
-  const interval = setInterval(loadReports, 8000);
-
-  return () => clearInterval(interval);
-
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const applyRainSimulation = (zone: Zone): Zone => {
     let score = zone.risk_score;
@@ -285,6 +284,29 @@ setReports(mappedReports);
   };
 
   const simulatedZones = zones.map(applyRainSimulation);
+  const filteredZones = simulatedZones.filter((z) => {
+    // Filter by risk range
+    if (riskRange !== "ALL") {
+      const score = z.risk_score;
+      if (riskRange === "0-100" && !(score <= 100)) return false;
+      if (riskRange === "100-500" && !(score > 100 && score <= 500)) return false;
+      if (riskRange === "500-1000" && !(score > 500 && score <= 1000)) return false;
+      if (riskRange === "1000-1500" && !(score > 1000 && score <= 1500)) return false;
+      if (riskRange === "1500-2000" && !(score > 1500 && score <= 2000)) return false;
+      if (riskRange === "2000+" && !(score > 2000)) return false;
+    }
+
+    // Filter by risk level
+    if (selectedRisk !== "ALL" && z.risk_status !== selectedRisk)
+      return false;
+
+    // Filter by zone name
+    if (selectedZone !== "ALL" && z.zone_name !== selectedZone)
+      return false;
+
+    return true;
+  });
+  
   const topHotspots = [...simulatedZones].sort((a, b) => b.risk_score - a.risk_score).slice(0, 5);
 
   const getActionText = (risk: string) => {
@@ -340,60 +362,60 @@ setReports(mappedReports);
   };
 
   const submitCitizenReport = async () => {
-  if (!reportText && reportImages.length === 0) return;
+    if (!reportText && reportImages.length === 0) return;
 
-  if (!navigator.geolocation) {
-    alert("Location not supported on this device");
-    return;
-  }
-
-  setReportLoading(true);
-
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude } = pos.coords;
-
-      const description =
-        reportImages.length > 0
-          ? `${reportText}\n[${reportImages.length} image(s) attached]`
-          : reportText;
-
-      try {
-        const result = await submitReport({
-          type: "flood",
-          description,
-          latitude,
-          longitude,
-        });
-
-        // Show locally on map
-        setReports((prev) => [
-          ...prev,
-          { lat: latitude, lng: longitude, note: description },
-        ]);
-
-        alert(
-          result.verification_status === "trusted"
-            ? "Report submitted successfully"
-            : "Report submitted and under verification"
-        );
-
-      } catch (err) {
-        console.error("Report failed", err);
-        alert("Report submission failed");
-      }
-
-      setReportText("");
-      setReportImages([]);
-      setImagePreviews([]);
-      setReportLoading(false);
-    },
-    () => {
-      alert("Location permission denied. Please allow location access.");
-      setReportLoading(false);
+    if (!navigator.geolocation) {
+      alert("Location not supported on this device");
+      return;
     }
-  );
-};
+
+    setReportLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+
+        const description =
+          reportImages.length > 0
+            ? `${reportText}\n[${reportImages.length} image(s) attached]`
+            : reportText;
+
+        try {
+          const result = await submitReport({
+            type: "flood",
+            description,
+            latitude,
+            longitude,
+          });
+
+          // Show locally on map
+          setReports((prev) => [
+            ...prev,
+            { lat: latitude, lng: longitude, note: description },
+          ]);
+
+          alert(
+            result.verification_status === "trusted"
+              ? "Report submitted successfully"
+              : "Report submitted and under verification"
+          );
+
+        } catch (err) {
+          console.error("Report failed", err);
+          alert("Report submission failed");
+        }
+
+        setReportText("");
+        setReportImages([]);
+        setImagePreviews([]);
+        setReportLoading(false);
+      },
+      () => {
+        alert("Location permission denied. Please allow location access.");
+        setReportLoading(false);
+      }
+    );
+  };
 
   const criticalCount = simulatedZones.filter((z) => z.risk_status === "CRITICAL").length;
   const highCount = simulatedZones.filter((z) => z.risk_status === "HIGH").length;
@@ -508,6 +530,13 @@ setReports(mappedReports);
         </div>
       </header>
 
+      {/* Loading Overlay */}
+      {zonesLoading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        </div>
+      )}
+
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -606,7 +635,50 @@ setReports(mappedReports);
                     <span className="text-xs font-medium text-risk-low">Live</span>
                   </div>
                 </div>
+                {/* Map Filters */}
+                <div className="flex gap-3 p-4 border-b border-border/50">
+                  <select
+                    value={selectedRisk}
+                    onChange={(e) => setSelectedRisk(e.target.value)}
+                    className="px-3 py-2 rounded-lg border bg-background text-sm"
+                  >
+                    <option value="ALL">All Risk Levels</option>
+                    <option value="CRITICAL">Critical</option>
+                    <option value="HIGH">High</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="LOW">Low</option>
+                  </select>
+
+                  <select
+                    value={selectedZone}
+                    onChange={(e) => setSelectedZone(e.target.value)}
+                    className="px-3 py-2 rounded-lg border bg-background text-sm"
+                  >
+                    <option value="ALL">All Zones</option>
+                    {zones.map((z) => (
+                      <option key={z.zone_name} value={z.zone_name}>
+                        {z.zone_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="relative h-[500px]">
+                  {/* Risk Range Filter */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <select
+                      value={riskRange}
+                      onChange={(e) => setRiskRange(e.target.value)}
+                      className="px-3 py-2 rounded-lg border bg-background text-sm"
+                    >
+                      <option value="ALL">All Risk Scores</option>
+                      <option value="0-100">0 – 100</option>
+                      <option value="100-500">100 – 500</option>
+                      <option value="500-1000">500 – 1000</option>
+                      <option value="1000-1500">1000 – 1500</option>
+                      <option value="1500-2000">1500 – 2000</option>
+                      <option value="2000+">2000+</option>
+                    </select>
+                  </div>
                   <Suspense
                     fallback={
                       <div className="h-full w-full bg-secondary/20 animate-pulse flex items-center justify-center text-muted-foreground">
@@ -615,7 +687,7 @@ setReports(mappedReports);
                     }
                   >
                     <DelhiHotspotMap
-                      zones={simulatedZones}
+                      zones={filteredZones}
                       reports={reports}
                       lang={lang}
                       onZoneClick={(name) => {
@@ -755,7 +827,7 @@ setReports(mappedReports);
                     </div>
                   }
                 >
-                  <DelhiHotspotMap zones={simulatedZones} reports={reports} lang={lang} />
+                  <DelhiHotspotMap zones={filteredZones} reports={reports} lang={lang} />
                 </Suspense>
               </div>
             </div>
