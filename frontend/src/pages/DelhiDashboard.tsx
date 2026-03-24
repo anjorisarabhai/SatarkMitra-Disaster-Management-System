@@ -253,6 +253,10 @@ export default function DelhiDashboard() {
             lat: r.lat ?? r.latitude,
             lng: r.lng ?? r.longitude,
             note: r.note ?? r.description ?? "Flood report",
+            urgency: r.urgency_score ?? 0,
+            category: r.category ?? "NORMAL",
+
+
           }))
           .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
         setReports(mappedReports);
