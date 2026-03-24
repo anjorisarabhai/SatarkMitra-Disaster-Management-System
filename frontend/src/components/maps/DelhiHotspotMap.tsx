@@ -119,6 +119,13 @@ const translations = {
   },
 };
 
+const getReportColor = (category?: string) => {
+  if (category === "PANIC") return "red";
+  if (category === "URGENT") return "orange";
+  if (category === "MODERATE") return "gold";
+  return "green";
+};
+
 export default function DelhiHotspotMap({
   zones = [],
   reports = [],
@@ -226,7 +233,7 @@ export default function DelhiHotspotMap({
       }
 
       const marker = L.marker([r.lat, r.lng], {
-        icon: createIcon("violet"),
+        icon: createIcon(getReportColor(r.category)),
       }).addTo(map);
 
       marker.bindPopup(
