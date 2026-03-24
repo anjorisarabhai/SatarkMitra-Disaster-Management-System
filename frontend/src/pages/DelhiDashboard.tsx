@@ -259,7 +259,10 @@ export default function DelhiDashboard() {
 
           }))
           .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
-        setReports(mappedReports);
+        
+        setReports(
+          mappedReports.sort((a, b) => (b.urgency ?? 0) - (a.urgency ?? 0))
+        );
       } catch (err) {
         console.warn("Failed to load citizen reports:", err);
       }
