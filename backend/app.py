@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from utils.sentiment import analyze_report
 import os
 import requests
 import numpy as np
@@ -268,6 +269,7 @@ def submit_report(report: CitizenReport):
     try:
 
         verification, scam_score = honeypot_verify_report(report.description)
+        sentiment = analyze_report(report.description)
 
         record = {
             "type": report.type,
@@ -279,8 +281,11 @@ def submit_report(report: CitizenReport):
             "source": report.source,
             "verification_status": verification,
             "scam_score": scam_score,
+            "urgency_score": sentiment["score"],
+            "category": sentiment["category"],
             "created_at": datetime.utcnow()
         }
+        
 
         result = citizen_reports.insert_one(record)
 
@@ -288,7 +293,10 @@ def submit_report(report: CitizenReport):
             "status": "received",
             "verification_status": verification,
             "scam_score": scam_score,
+            "urgency_score": sentiment["score"],
+            "category": sentiment["category"],
             "report_id": str(result.inserted_id)
+
         }
 
     except Exception as e:
