@@ -179,6 +179,7 @@ export default function DelhiDashboard() {
   const [playing, setPlaying] = useState(false);
   const [viewMode, setViewMode] = useState<"citizen" | "authority">("citizen");
   const [reports, setReports] = useState<Report[]>([]);
+  const topReports = reports.filter(r => r.category === "PANIC").slice(0, 3);
   const [reportText, setReportText] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("map");
