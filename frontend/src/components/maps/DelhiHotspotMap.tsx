@@ -239,8 +239,11 @@ export default function DelhiHotspotMap({
       marker.bindPopup(
         `<div class="text-sm">
           <b>${text.citizenReport}</b><br />
-          ${r.note || text.floodingReported}
-        </div>`
+          ${r.note || text.floodingReported}<br />
+          
+          <b>Priority:</b> ${r.category}<br />
+          <b>Score:</b> ${r.urgency}
+      </div>`
       );
 
       markersRef.current.push(marker);
