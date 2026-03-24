@@ -75,8 +75,8 @@ export interface Report {
   lng?: number;
   note?: string;
   verification_status?: string;
-  sentiment_score?: number;  
-  sentiment_label?: string;  
+  urgency?: number;
+  category?: string;
 }
 
 }
