@@ -322,6 +322,8 @@ def get_reports():
             "lng": r["location"]["lon"],
             "note": r.get("description", ""),
             "verification_status": r.get("verification_status", "trusted"),
+            "urgency_score": r.get("urgency_score", 0),
+            "category": r.get("category", "NORMAL"),
             "created_at": r["created_at"]
         })
 
