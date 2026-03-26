@@ -8,3 +8,5 @@ seaborn
 scikit-learn
 #earthengine authenticate
 python-dotenv
+transformers
+torch
