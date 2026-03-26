@@ -24,17 +24,15 @@ export default function DelhiMapLegend({ className = "", lang = "en" }: DelhiMap
   const t = {
     en: {
       title: "Map Legend",
-      // Risk zones
       low: "Low Risk Zone",
       moderate: "Moderate Risk Zone",
       high: "High Risk Zone",
       critical: "Critical Risk Zone",
-      // Sentiment categories
+      shelter: "Emergency Shelter",
       panic: "Panic (Immediate Rescue)",
       urgent: "Urgent (High Priority)",
+      moderateReport: "Moderate Report",
       normal: "Normal Report",
-      // Other
-      shelter: "Emergency Shelter",
     },
     hi: {
       title: "मानचित्र संकेत",
@@ -42,10 +40,11 @@ export default function DelhiMapLegend({ className = "", lang = "en" }: DelhiMap
       moderate: "मध्यम जोखिम क्षेत्र",
       high: "उच्च जोखिम क्षेत्र",
       critical: "गंभीर जोखिम क्षेत्र",
+      shelter: "आपातकालीन आश्रय",
       panic: "घबराहट (तत्काल बचाव)",
       urgent: "अत्यावश्यक (उच्च प्राथमिकता)",
+      moderateReport: "मध्यम रिपोर्ट",
       normal: "सामान्य रिपोर्ट",
-      shelter: "आपातकालीन आश्रय",
     },
   };
 
@@ -65,11 +64,12 @@ export default function DelhiMapLegend({ className = "", lang = "en" }: DelhiMap
 
         <div className="h-px bg-border my-1.5" />
 
-        {/* Sentiment Report Colors */}
+        {/* Citizen Report Sentiment Colors — matches getReportColor() in DelhiHotspotMap */}
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Citizen Reports</p>
-        <LegendItem color="#dc2626" label={text.panic} />
-        <LegendItem color="#f97316" label={text.urgent} />
-        <LegendItem color="#a855f7" label={text.normal} />
+        <LegendItem color="#ef4444" label={text.panic} />        {/* red   → PANIC */}
+        <LegendItem color="#f97316" label={text.urgent} />       {/* orange → URGENT */}
+        <LegendItem color="#eab308" label={text.moderateReport} />{/* gold  → MODERATE */}
+        <LegendItem color="#22c55e" label={text.normal} />       {/* green  → default */}
 
         <div className="h-px bg-border my-1.5" />
 
