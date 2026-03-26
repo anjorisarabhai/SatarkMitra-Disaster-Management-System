@@ -77,7 +77,8 @@ export interface Report {
   verification_status?: string;
   urgency?: number;
   category?: string;
-}
+  finalPriority?: number;
+
 
 }
 
