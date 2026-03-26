@@ -10,3 +10,5 @@ scikit-learn
 python-dotenv
 transformers
 torch
+python-multipart
+fastapi

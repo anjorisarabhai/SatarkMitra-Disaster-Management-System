@@ -2,6 +2,8 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
 from utils.sentiment import analyze_report
 import os
 import requests
@@ -328,3 +330,43 @@ def get_reports():
         })
 
     return reports
+
+#USSD
+
+@app.post("/ussd", response_class=PlainTextResponse)
+async def ussd_handler(request: Request):
+
+    form = await request.form()
+    text = form.get("text", "")
+
+    # FIRST SCREEN
+    if text == "":
+        return "CON Welcome to SatarkMitra\n1. Check Flood Risk\n2. Report Flood\n3. Find Shelter"
+
+    # OPTION 1 → CHECK RISK
+    elif text == "1":
+        return "END Current Risk Level: HIGH"
+
+    # OPTION 2 → REPORT FLOW
+    elif text == "2":
+        return "CON Enter flood description"
+
+    elif text.startswith("2*"):
+        description = text.split("*")[1]
+
+        # Save to DB (reuse your existing logic)
+        record = {
+            "type": "flood",
+            "description": description,
+            "source": "ussd",
+            "verification_status": "trusted"
+        }
+        citizen_reports.insert_one(record)
+
+        return "END Report submitted successfully"
+
+    # OPTION 3 → SHELTER
+    elif text == "3":
+        return "END Nearest Shelter: Community Hall, Lajpat Nagar"
+
+    return "END Invalid input"
