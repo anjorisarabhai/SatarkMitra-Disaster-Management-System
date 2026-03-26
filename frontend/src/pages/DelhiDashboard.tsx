@@ -250,15 +250,26 @@ export default function DelhiDashboard() {
       try {
         const data = await fetchCitizenReports();
         const mappedReports: Report[] = (data || [])
-          .map((r: any) => ({
-            lat: r.lat ?? r.latitude,
-            lng: r.lng ?? r.longitude,
-            note: r.note ?? r.description ?? "Flood report",
-            urgency: r.urgency_score ?? 0,
-            category: r.category ?? "NORMAL",
+          .map((r: any) => {
+            const lat = r.lat ?? r.latitude;
+            const lng = r.lng ?? r.longitude;
+            const nearestZone = zones.find(
+              (z) =>
+                Math.abs(z.latitude - lat) < 0.01 &&
+                Math.abs(z.longitude - lng) < 0.01
+            );
 
-
-          }))
+            return{
+              lat,
+              lng,
+              note: r.note ?? r.description ?? "Flood report",
+              urgency: r.urgency_score ?? 0,
+              category: r.category ?? "NORMAL",
+              finalPriority :
+                (r.urgency_score ?? 0) * 0.6 +
+                (nearestZone?.risk_score ?? 0) * 0.4,
+            };
+          })
           .filter((r: any) => typeof r.lat === "number" && typeof r.lng === "number");
         
         setReports(
@@ -275,7 +286,7 @@ export default function DelhiDashboard() {
     const interval = setInterval(loadReports, 8000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [zones]);
 
   const applyRainSimulation = (zone: Zone): Zone => {
     let score = zone.risk_score;
