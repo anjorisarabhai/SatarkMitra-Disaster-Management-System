@@ -42,6 +42,7 @@ import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
 import USSDAlert from "@/components/ui/USSDAlert";
 
 
+
 const DELHI_SHELTERS = [
   { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
   { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
