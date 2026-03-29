@@ -6,6 +6,8 @@ from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from fastapi import FastAPI, Form
 from utils.sentiment import analyze_report
+from sms import send_alert_to_all
+
 import os
 import requests
 import numpy as np
@@ -365,3 +367,7 @@ async def ussd_handler(
         return PlainTextResponse("END Shelter: Lajpat Nagar")
 
     return PlainTextResponse("END Invalid")
+@app.get("/test-alert")
+def test_alert():
+    send_alert_to_all("🚨 Test Flood Alert from SatarkMitra")
+    return {"status": "alerts sent"}
