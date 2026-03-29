@@ -12,3 +12,5 @@ transformers
 torch
 python-multipart
 fastapi
+twilio
+pymongo
