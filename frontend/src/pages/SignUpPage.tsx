@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ROLE_OPTIONS, getRoleDashboardPath } from "@/lib/roles";
+import USSDAlert from "@/components/ui/USSDAlert";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -60,6 +61,7 @@ export default function SignupPage() {
             </div>
             <p className="text-muted-foreground text-sm">Create your account</p>
           </div>
+          <USSDAlert />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
