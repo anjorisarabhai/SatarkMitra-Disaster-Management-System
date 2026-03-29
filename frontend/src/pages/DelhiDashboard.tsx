@@ -39,6 +39,8 @@ import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+import USSDAlert from "@/components/ui/USSDAlert";
+
 
 const DELHI_SHELTERS = [
   { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
@@ -557,6 +559,8 @@ export default function DelhiDashboard() {
       )}
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+          {!navigator.onLine && <USSDAlert />}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="glass-card p-4">
