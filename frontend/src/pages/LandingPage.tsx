@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import kedarnathHero from "@/assets/kedarnath-hero.jpg";
 import delhiHero from "@/assets/delhi-hero.jpg";
+import USSDAlert from "@/components/ui/USSDAlert";
 
 const locations = [
   {
@@ -45,6 +46,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
+      <USSDAlert />
+
       {/* Hero Section */}
       <div className="relative">
         {/* Background gradient */}
