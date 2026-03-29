@@ -344,7 +344,7 @@ export default function KedarnathDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-          {!navigator.onLine && <USSDAlert />}
+          <USSDAlert />
         {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">

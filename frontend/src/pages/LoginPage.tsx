@@ -62,7 +62,7 @@ export default function LoginPage() {
             </div>
             <p className="text-muted-foreground text-sm">Sign in to your dashboard</p>
           </div>
-          {!navigator.onLine && <USSDAlert />}
+          <USSDAlert />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
