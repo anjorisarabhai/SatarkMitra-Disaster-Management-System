@@ -7,6 +7,12 @@ from fastapi.responses import PlainTextResponse
 from fastapi import FastAPI, Form
 from utils.sentiment import analyze_report
 from sms import send_alert_to_all
+from db.mongo import (
+    users_collection,
+    alerts_collection,
+    subscribers_collection,
+    citizen_reports
+)
 
 import os
 import requests
@@ -20,7 +26,12 @@ import re
 
 from db.mongo import citizen_reports
 from db.models import CitizenReport
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
 # =====================================================
 # CONFIGURATION
 # =====================================================
@@ -371,3 +382,42 @@ async def ussd_handler(
 def test_alert():
     send_alert_to_all("🚨 Test Flood Alert from SatarkMitra")
     return {"status": "alerts sent"}
+@app.post("/register")
+def register(user: dict):
+    hashed = hash_password(user["password"])
+
+    user_data = {
+        "name": user["name"],
+        "phone": user["phone"],
+        "email": user["email"],
+        "password": hashed,
+        "emergency_contacts": []
+    }
+
+    users_collection.insert_one(user_data)
+
+    # ✅ also add to subscribers
+    subscribers_collection.insert_one({
+        "phone": user["phone"],
+        "subscribed": True
+    })
+
+    return {"message": "User registered"}
+@app.post("/add-contact")
+def add_contact(phone: str, contact: dict):
+
+    users_collection.update_one(
+        {"phone": phone},
+        {
+            "$push": {
+                "emergency_contacts": contact
+            }
+        }
+    )
+
+    return {"message": "Contact added"}
+@app.get("/contacts/{phone}")
+def get_contacts(phone: str):
+    user = users_collection.find_one({"phone": phone})
+
+    return user.get("emergency_contacts", [])
