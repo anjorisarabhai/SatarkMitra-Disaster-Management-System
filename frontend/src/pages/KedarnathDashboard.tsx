@@ -46,6 +46,8 @@ import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+import USSDAlert from "@/components/ui/USSDAlert";
+
 
 const KEDARNATH_SHELTERS = [
   { name: "Govt. Primary School Shelter", lat: 30.72, lng: 79.05, capacity: 150, occupancy: 45, status: "Open" },
@@ -342,6 +344,7 @@ export default function KedarnathDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
+          {!navigator.onLine && <USSDAlert />}
         {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
