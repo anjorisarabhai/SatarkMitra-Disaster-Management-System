@@ -26,6 +26,7 @@ import { SafeNavigationPanel } from "@/components/emergency/SafeNavigationPanel"
 import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
 import { AIExplanation } from "@/components/emergency/AIExplanation";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+import USSDAlert from "@/components/ui/USSDAlert";
 
 const SHELTERS = [
   { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
@@ -166,6 +167,7 @@ export default function CitizenDashboard() {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       <main className="container mx-auto px-4 py-6 space-y-6">
+        <USSDAlert />
         {/* Emergency Mode + Risk Pulse */}
 
         <div className="grid md:grid-cols-2 gap-4">
