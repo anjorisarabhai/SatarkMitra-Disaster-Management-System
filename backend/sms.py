@@ -1,34 +1,40 @@
 import os
-from twilio.rest import Client
 from dotenv import load_dotenv
+from twilio.rest import Client
 
-# Load env variables
 load_dotenv()
 
-ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
-# Load users as list
-ALERT_USERS = os.getenv("ALERT_USERS", "")
-USER_LIST = [num.strip() for num in ALERT_USERS.split(",") if num.strip()]
+# 👇 NEW
+ALERT_NUMBERS = os.getenv("ALERT_NUMBERS", "")
 
-client = Client(ACCOUNT_SID, AUTH_TOKEN)
+client = Client(TWILIO_SID, TWILIO_AUTH)
 
 
-def send_sms(to_number: str, message: str):
+def send_sms(to, message):
+    print("🔥 TWILIO CALL:", to)
+
     try:
-        client.messages.create(
+        msg = client.messages.create(
             body=message,
             from_=TWILIO_NUMBER,
-            to=to_number
+            to=to
         )
-        print(f"✅ SMS sent to {to_number}")
+        print("✅ SENT:", to)
     except Exception as e:
-        print(f"❌ SMS ERROR ({to_number}):", e)
+        print("❌ ERROR:", e)
 
 
-# 🔥 BROADCAST FUNCTION
-def send_alert_to_all(message: str):
-    for user in USER_LIST:
-        send_sms(user, message)
+def send_alert_to_all(message):
+    numbers = ALERT_NUMBERS.split(",")
+
+    print("🚀 ALERT NUMBERS:", numbers)   # 👈 ADD THIS
+
+    for number in numbers:
+        number = number.strip()
+        if number:
+            print("📤 Sending to:", number)   # 👈 ADD THIS
+            send_sms(number, message)

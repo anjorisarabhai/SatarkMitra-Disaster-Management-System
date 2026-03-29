@@ -31,6 +31,8 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str):
+    # bcrypt limit fix (VERY IMPORTANT)
+    password = password[:72]
     return pwd_context.hash(password)
 # =====================================================
 # CONFIGURATION
@@ -382,8 +384,11 @@ async def ussd_handler(
 def test_alert():
     send_alert_to_all("🚨 Test Flood Alert from SatarkMitra")
     return {"status": "alerts sent"}
+
 @app.post("/register")
 def register(user: dict):
+    print("REGISTER INPUT:", user)
+
     hashed = hash_password(user["password"])
 
     user_data = {
@@ -396,13 +401,13 @@ def register(user: dict):
 
     users_collection.insert_one(user_data)
 
-    # ✅ also add to subscribers
     subscribers_collection.insert_one({
         "phone": user["phone"],
         "subscribed": True
     })
 
     return {"message": "User registered"}
+
 @app.post("/add-contact")
 def add_contact(phone: str, contact: dict):
 

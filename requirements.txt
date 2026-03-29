@@ -14,3 +14,4 @@ python-multipart
 fastapi
 twilio
 pymongo
+passlib[bcrypt]
