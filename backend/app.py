@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
+from fastapi import FastAPI, Form
 from utils.sentiment import analyze_report
 import os
 import requests
@@ -334,39 +335,62 @@ def get_reports():
 #USSD
 
 @app.post("/ussd", response_class=PlainTextResponse)
-async def ussd_handler(request: Request):
+async def ussd_handler(
+    sessionId: str = Form(""),
+    serviceCode: str = Form(""),
+    phoneNumber: str = Form(""),
+    text: str = Form("")
+):
 
-    form = await request.form()
-    text = form.get("text", "")
+    # Split user input
+    inputs = text.split("*") if text else []
 
-    # FIRST SCREEN
+    # =========================
+    # 🟢 MAIN MENU
+    # =========================
     if text == "":
         return "CON Welcome to SatarkMitra\n1. Check Flood Risk\n2. Report Flood\n3. Find Shelter"
 
-    # OPTION 1 → CHECK RISK
-    elif text == "1":
-        return "END Current Risk Level: HIGH"
+    # =========================
+    # 🔵 OPTION 1 → RISK
+    # =========================
+    elif inputs[0] == "1":
+        # 🔥 Replace with real model/API later
+        risk = "HIGH"
+        return f"END Current Risk Level: {risk}"
 
-    # OPTION 2 → REPORT FLOW
-    elif text == "2":
-        return "CON Enter flood description"
+    # =========================
+    # 🔴 OPTION 2 → REPORT FLOW
+    # =========================
+    elif inputs[0] == "2":
 
-    elif text.startswith("2*"):
-        description = text.split("*")[1]
+        # Step 1 → Ask description
+        if len(inputs) == 1:
+            return "CON Enter flood description"
 
-        # Save to DB (reuse your existing logic)
-        record = {
-            "type": "flood",
-            "description": description,
-            "source": "ussd",
-            "verification_status": "trusted"
-        }
-        citizen_reports.insert_one(record)
+        # Step 2 → Save report
+        elif len(inputs) == 2:
+            description = inputs[1]
 
-        return "END Report submitted successfully"
+            record = {
+                "type": "flood",
+                "description": description,
+                "source": "ussd",
+                "phone": phoneNumber,
+                "verification_status": "trusted"
+            }
 
-    # OPTION 3 → SHELTER
-    elif text == "3":
-        return "END Nearest Shelter: Community Hall, Lajpat Nagar"
+            citizen_reports.insert_one(record)
 
-    return "END Invalid input"
+            return "END ✅ Report submitted successfully"
+
+    # =========================
+    # 🟡 OPTION 3 → SHELTER
+    # =========================
+    elif inputs[0] == "3":
+        return "END 🏠 Nearest Shelter: Community Hall, Lajpat Nagar"
+
+    # =========================
+    # ❌ INVALID
+    # =========================
+    return "END ❌ Invalid input"
