@@ -334,63 +334,34 @@ def get_reports():
 
 #USSD
 
-@app.post("/ussd", response_class=PlainTextResponse)
+@app.api_route("/ussd", methods=["GET", "POST"])
 async def ussd_handler(
-    sessionId: str = Form(""),
-    serviceCode: str = Form(""),
-    phoneNumber: str = Form(""),
-    text: str = Form("")
+    sessionId: str = Form(default=""),
+    serviceCode: str = Form(default=""),
+    phoneNumber: str = Form(default=""),
+    text: str = Form(default="")
 ):
-
-    # Split user input
     inputs = text.split("*") if text else []
 
-    # =========================
-    # 🟢 MAIN MENU
-    # =========================
     if text == "":
-        return "CON Welcome to SatarkMitra\n1. Check Flood Risk\n2. Report Flood\n3. Find Shelter"
+        return PlainTextResponse(
+            "CON SatarkMitra\n"
+            "1. Check Risk\n"
+            "2. Report Flood\n"
+            "3. Shelter"
+        )
 
-    # =========================
-    # 🔵 OPTION 1 → RISK
-    # =========================
     elif inputs[0] == "1":
-        # 🔥 Replace with real model/API later
-        risk = "HIGH"
-        return f"END Current Risk Level: {risk}"
+        return PlainTextResponse("END Risk: HIGH")
 
-    # =========================
-    # 🔴 OPTION 2 → REPORT FLOW
-    # =========================
     elif inputs[0] == "2":
-
-        # Step 1 → Ask description
         if len(inputs) == 1:
-            return "CON Enter flood description"
+            return PlainTextResponse("CON Enter description")
 
-        # Step 2 → Save report
         elif len(inputs) == 2:
-            description = inputs[1]
+            return PlainTextResponse("END Report submitted")
 
-            record = {
-                "type": "flood",
-                "description": description,
-                "source": "ussd",
-                "phone": phoneNumber,
-                "verification_status": "trusted"
-            }
-
-            citizen_reports.insert_one(record)
-
-            return "END ✅ Report submitted successfully"
-
-    # =========================
-    # 🟡 OPTION 3 → SHELTER
-    # =========================
     elif inputs[0] == "3":
-        return "END 🏠 Nearest Shelter: Community Hall, Lajpat Nagar"
+        return PlainTextResponse("END Shelter: Lajpat Nagar")
 
-    # =========================
-    # ❌ INVALID
-    # =========================
-    return "END ❌ Invalid input"
+    return PlainTextResponse("END Invalid")
