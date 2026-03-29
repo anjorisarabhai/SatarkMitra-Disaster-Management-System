@@ -419,5 +419,5 @@ def add_contact(phone: str, contact: dict):
 @app.get("/contacts/{phone}")
 def get_contacts(phone: str):
     user = users_collection.find_one({"phone": phone})
-
+    
     return user.get("emergency_contacts", [])
