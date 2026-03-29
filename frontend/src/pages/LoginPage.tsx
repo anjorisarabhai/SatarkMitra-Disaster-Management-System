@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getRoleDashboardPath } from "@/lib/roles";
+import USSDAlert from "@/components/ui/USSDAlert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -61,6 +62,7 @@ export default function LoginPage() {
             </div>
             <p className="text-muted-foreground text-sm">Sign in to your dashboard</p>
           </div>
+          {!navigator.onLine && <USSDAlert />}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
