@@ -336,50 +336,46 @@ def get_reports():
     for r in cursor:
         reports.append({
             "id": str(r["_id"]),
-            "lat": r["location"]["lat"],
-            "lng": r["location"]["lon"],
+            "lat": r.get("location", {}).get("lat", 0),
+            "lng": r.get("location", {}).get("lon", 0),
             "note": r.get("description", ""),
             "verification_status": r.get("verification_status", "trusted"),
             "urgency_score": r.get("urgency_score", 0),
             "category": r.get("category", "NORMAL"),
-            "created_at": r["created_at"]
+            "created_at": r.get("created_at")
         })
 
     return reports
 
 #USSD
 
-@app.api_route("/ussd", methods=["GET", "POST"])
+@app.api_route("/ussd", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def ussd_handler(
     sessionId: str = Form(default=""),
     serviceCode: str = Form(default=""),
     phoneNumber: str = Form(default=""),
     text: str = Form(default="")
 ):
-    inputs = text.split("*") if text else []
+    print("📩 USSD HIT:", text)
 
     if text == "":
-        return PlainTextResponse(
-            "CON SatarkMitra\n"
-            "1. Check Risk\n"
-            "2. Report Flood\n"
-            "3. Shelter"
-        )
+        return "CON SatarkMitra\n1. Check Risk\n2. Report Flood\n3. Shelter"
 
-    elif inputs[0] == "1":
-        return PlainTextResponse("END Risk: HIGH")
+    inputs = text.split("*")
 
-    elif inputs[0] == "2":
+    if inputs[0] == "1":
+        return "END Risk: HIGH"
+
+    if inputs[0] == "2":
         if len(inputs) == 1:
-            return PlainTextResponse("CON Enter description")
+            return "CON Enter description"
+        return "END Report submitted successfully"
 
-        elif len(inputs) == 2:
-            return PlainTextResponse("END Report submitted")
+    if inputs[0] == "3":
+        return "END Shelter: Lajpat Nagar"
 
-    elif inputs[0] == "3":
-        return PlainTextResponse("END Shelter: Lajpat Nagar")
+    return "END Invalid"
 
-    return PlainTextResponse("END Invalid")
 @app.get("/test-alert")
 def test_alert():
     send_alert_to_all("🚨 Test Flood Alert from SatarkMitra")
