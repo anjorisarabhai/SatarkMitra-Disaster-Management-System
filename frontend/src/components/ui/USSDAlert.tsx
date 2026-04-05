@@ -3,7 +3,7 @@ export default function USSDAlert() {
     <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-lg text-sm flex items-center justify-between">
       
       <span>
-        📞 No internet? Dial <b>*123#</b> for offline support
+        📞 No internet? Dial <b>*384*41482#</b> for offline support
       </span>
 
       <a
