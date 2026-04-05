@@ -97,22 +97,27 @@ delhi_model = safe_load_joblib(os.path.join(MODEL_DIR, "drainage_risk_model.pkl"
 # GENERATE DELHI MICRO HOTSPOTS (2500+)
 # =====================================================
 
-for z in DELHI_ZONES[:30]:
+def generate_delhi_hotspots():
 
-    rainfall = np.random.uniform(40, 90)
-    runoff = np.random.uniform(0.8, 1.5)
+    lat_min, lat_max = 28.40, 28.88
+    lon_min, lon_max = 76.84, 77.35
 
-    X = pd.DataFrame([{
-        "river_water_area_sqkm": 6.5,
-        "upstream_runoff_mm": runoff,
-        "rainfall_mm": rainfall,
-        "ggn_runoff_mm": runoff * 0.8,
-        "ggn_rainfall_mm": rainfall * 0.9,
-        "month": 7
-    }])
+    step = 0.05
 
-    score = float(delhi_model.predict(X)[0])
+    hotspots = []
 
+    for lat in np.arange(lat_min, lat_max, step):
+        for lon in np.arange(lon_min, lon_max, step):
+
+            hotspots.append({
+                "name": f"Cell_{round(lat,3)}_{round(lon,3)}",
+                "lat": float(lat),
+                "lon": float(lon),
+                "elevation": 210,
+                "drainage": "MODERATE"
+            })
+
+    return hotspots
 
 DELHI_ZONES = generate_delhi_hotspots()
 
@@ -219,7 +224,7 @@ def delhi_zones():
             return "MODERATE"
         return "LOW"
 
-    for z in DELHI_ZONES:
+    for z in DELHI_ZONES[:30]:
 
         rainfall = np.random.uniform(40, 90)
         runoff = np.random.uniform(0.8, 1.5)
