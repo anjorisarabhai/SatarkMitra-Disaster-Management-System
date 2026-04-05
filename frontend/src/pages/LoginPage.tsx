@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,14 +24,35 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     const success = await login(email, password);
     setLoading(false);
 
     if (success) {
-      const usersRaw = localStorage.getItem("satarkmitra_users") || "[]";
-      const users = JSON.parse(usersRaw);
-      const user = users.find((u: any) => u.email === email);
-      navigate(getRoleDashboardPath(user?.role || "citizen"));
+      try {
+        const users = JSON.parse(
+          localStorage.getItem("satarkmitra_users") || "[]"
+        );
+
+        const user = users.find((u: any) => u.email === email);
+
+        if (!user) {
+          toast({
+            title: "Error",
+            description: "User data not found. Please sign up again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        navigate(getRoleDashboardPath(user.role));
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Login failed",
@@ -40,31 +62,48 @@ export default function LoginPage() {
     }
   };
 
+  const handleOfflineMode = () => {
+    // Works best on mobile devices
+    window.location.href = "tel:*123#";
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative">
+      
+      {/* Theme Toggle */}
       <div className="absolute top-4 right-4 z-20">
         <ThemeToggle />
       </div>
+
+      {/* Background */}
       <div className="absolute inset-0 bg-hero-pattern opacity-50" />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md"
       >
         <div className="glass-card p-8">
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-3">
               <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
                 <Shield className="w-6 h-6 text-primary" />
               </div>
-              <h1 className="text-2xl font-extrabold text-foreground">SatarkMitra</h1>
+              <h1 className="text-2xl font-extrabold text-foreground">
+                SatarkMitra
+              </h1>
             </div>
-            <p className="text-muted-foreground text-sm">Sign in to your dashboard</p>
+            <p className="text-muted-foreground text-sm">
+              Sign in to your dashboard
+            </p>
           </div>
-          <USSDAlert />
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -77,6 +116,7 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -93,23 +133,45 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !email || !password}
+            >
               <LogIn className="w-4 h-4 mr-2" />
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
+          {/* Offline Mode */}
+          <button
+            onClick={handleOfflineMode}
+            className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+          >
+            📞 Offline Mode (*384*41482#)
+          </button>
+
+          {/* Signup Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
+            <Link
+              to="/signup"
+              className="text-primary hover:underline font-medium"
+            >
               Sign up
             </Link>
           </p>
+
         </div>
       </motion.div>
     </div>
