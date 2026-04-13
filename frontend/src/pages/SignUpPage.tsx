@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { Shield, UserPlus, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ROLE_OPTIONS, getRoleDashboardPath } from "@/lib/roles";
+import { getRoleDashboardPath } from "@/lib/roles";
 import USSDAlert from "@/components/ui/USSDAlert";
 
 export default function SignupPage() {
@@ -16,8 +16,11 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>("citizen");
   const [loading, setLoading] = useState(false);
+  
+  // 🔒 SECURITY FIX: Force citizen role - users cannot self-assign privileged roles
+  const role = "citizen" as const;
+  
   const { signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,7 +28,11 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast({ title: "Password too short", description: "Minimum 6 characters.", variant: "destructive" });
+      toast({ 
+        title: "Password too short", 
+        description: "Minimum 6 characters required.", 
+        variant: "destructive" 
+      });
       return;
     }
     setLoading(true);
@@ -33,10 +40,17 @@ export default function SignupPage() {
     setLoading(false);
 
     if (success) {
-      toast({ title: "Account created!", description: `Welcome, ${name}` });
+      toast({ 
+        title: "Account created!", 
+        description: `Welcome, ${name}. You are registered as a citizen.` 
+      });
       navigate(getRoleDashboardPath(role));
     } else {
-      toast({ title: "Signup failed", description: "Email already registered.", variant: "destructive" });
+      toast({ 
+        title: "Signup failed", 
+        description: "Email already registered or invalid data.", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -59,19 +73,41 @@ export default function SignupPage() {
               </div>
               <h1 className="text-2xl font-extrabold text-foreground">SatarkMitra</h1>
             </div>
-            <p className="text-muted-foreground text-sm">Create your account</p>
+            <p className="text-muted-foreground text-sm">Create your citizen account</p>
+            
+            {/* 🔒 SECURITY NOTICE: Role assignment policy */}
+            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                <strong>📋 Note:</strong> All new accounts are registered as citizens. 
+                Government, Control Room, and Responder roles are assigned by authorized administrators.
+              </p>
+            </div>
           </div>
+          
           <USSDAlert />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input 
+                id="name" 
+                placeholder="Your name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="you@example.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
             </div>
 
             <div className="space-y-2">
@@ -95,34 +131,20 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <Label>Select Your Role</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {ROLE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setRole(opt.value)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
-                      role === opt.value
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border bg-card/50 text-muted-foreground hover:border-primary/50"
-                    }`}
-                  >
-                    <opt.icon className={`w-5 h-5 ${role === opt.value ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className="text-sm font-medium">{opt.label}</p>
-                      <p className="text-xs text-muted-foreground">{opt.description}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
+            {/* 🔒 SECURITY FIX: Role selection removed - all users default to citizen */}
+            <div className="p-3 bg-muted/30 rounded-lg border border-border">
+              <p className="text-sm font-medium text-foreground mb-1">Account Type</p>
+              <p className="text-sm text-muted-foreground">
+                Citizen Account
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                You can report incidents, view alerts, and access public safety information.
+              </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               <UserPlus className="w-4 h-4 mr-2" />
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? "Creating account..." : "Create Citizen Account"}
             </Button>
           </form>
 
@@ -131,6 +153,11 @@ export default function SignupPage() {
             <Link to="/login" className="text-primary hover:underline font-medium">
               Sign in
             </Link>
+          </p>
+          
+          {/* 🔒 ADMIN NOTICE */}
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Government officials and first responders: Please contact your administrator for account setup.
           </p>
         </div>
       </motion.div>

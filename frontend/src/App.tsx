@@ -9,7 +9,7 @@ import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import SignupPage from "./pages/SignUpPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import KedarnathDashboard from "./pages/KedarnathDashboard";
 import DelhiDashboard from "./pages/DelhiDashboard";
@@ -18,6 +18,7 @@ import FirstResponderDashboard from "./pages/dashboards/FirstResponderDashboard"
 import GovernmentDashboard from "./pages/dashboards/GovernmentDashboard";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ControlRoomDashboard from "./pages/dashboards/ControlRoomDashboard";
+import AdminCreateUser from "./pages/AdminCreateUser";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,13 @@ const App = () => (
             <Route path="/dashboard/admin" element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Create User Route */}
+            <Route path="/admin/create-user" element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminCreateUser />
               </ProtectedRoute>
             } />
 

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Settings, Users, ShieldCheck, Activity, Server,
   Database, Cpu, HardDrive, RefreshCw, Search,
-  ChevronDown, MoreHorizontal, CheckCircle2, XCircle, Clock
+  ChevronDown, MoreHorizontal, CheckCircle2, XCircle, Clock,
+  UserPlus
 } from "lucide-react";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
@@ -32,7 +34,7 @@ const systemServices = [
 const mockUsers = [
   { id: "u1", name: "Aarav Sharma", email: "aarav@example.com", role: "citizen" as UserRole, lastActive: "2 min ago", status: "online" },
   { id: "u2", name: "Priya Verma", email: "priya@example.com", role: "first_responder" as UserRole, lastActive: "15 min ago", status: "online" },
-  { id: "u3", name: "Ravi Kumar", email: "ravi@example.com", role: "government" as UserRole, lastActive: "1 hr ago", status: "offline" },
+  { id: "u3", name: "Ravi Kumar", email: "ravi@example.com", role: "govt_official" as UserRole, lastActive: "1 hr ago", status: "offline" },
   { id: "u4", name: "Sneha Patel", email: "sneha@example.com", role: "control_room" as UserRole, lastActive: "5 min ago", status: "online" },
   { id: "u5", name: "Amit Gupta", email: "amit@example.com", role: "admin" as UserRole, lastActive: "Just now", status: "online" },
   { id: "u6", name: "Neha Singh", email: "neha@example.com", role: "citizen" as UserRole, lastActive: "3 hrs ago", status: "offline" },
@@ -63,6 +65,7 @@ const auditTypeIcon: Record<string, typeof Settings> = {
 };
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("health");
   const [users, setUsers] = useState(mockUsers);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,7 +93,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Total Users", value: users.length.toString(), icon: Users, accent: "text-primary" },
-    { label: "Online Now", value: users.filter((u) => u.status === "online").toString().length > 0 ? users.filter((u) => u.status === "online").length.toString() : "0", icon: Activity, accent: "text-green-400" },
+    { label: "Online Now", value: users.filter((u) => u.status === "online").length.toString(), icon: Activity, accent: "text-green-400" },
     { label: "Services Healthy", value: `${systemServices.filter((s) => s.status === "healthy").length}/${systemServices.length}`, icon: Server, accent: "text-primary" },
     { label: "Incidents Today", value: "2", icon: XCircle, accent: "text-destructive" },
   ];
@@ -111,7 +114,16 @@ export default function AdminDashboard() {
               System health, user management & audit trail
             </p>
           </div>
-          <LiveIndicator />
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => navigate("/admin/create-user")}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create User
+            </Button>
+            <LiveIndicator />
+          </div>
         </div>
 
         {/* Stat cards */}
@@ -212,17 +224,27 @@ export default function AdminDashboard() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  {ROLE_OPTIONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {ROLE_OPTIONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={() => navigate("/admin/create-user")}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  New User
+                </Button>
+              </div>
             </div>
 
             <Card className="border-border/50 bg-card/80">

@@ -4,7 +4,6 @@ import type { UserRole } from "@/lib/roles";
 export type { UserRole };
 
 export interface User {
-  id: string;
   email: string;
   name: string;
   role: UserRole;
@@ -14,14 +13,13 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string, role: UserRole) => Promise<boolean>;
+  signup: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "satarkmitra_user";
-const USERS_KEY = "satarkmitra_users";
 
 function AuthProvider({ children }: { children: ReactNode }) {
 
@@ -34,86 +32,74 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const getStoredUsers = (): User[] => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const raw = localStorage.getItem(USERS_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
+      const response = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (!Array.isArray(parsed)) {
-        localStorage.removeItem(USERS_KEY);
-        return [];
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data.detail);
+        return false;
       }
 
-      return parsed;
-    } catch {
-      localStorage.removeItem(USERS_KEY);
-      return [];
-    }
-  };
-
-  const login = useCallback(async (email: string, _password: string): Promise<boolean> => {
-    try {
-      const users = getStoredUsers();
-
-      const found = users.find((u) => u.email === email);
-
-      if (!found) return false;
-
-      setUser(found);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(found));
+      setUser(data.user);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
 
       return true;
-    } catch {
+
+    } catch (err) {
+      console.error(err);
       return false;
     }
   }, []);
 
   const signup = useCallback(
-  async (email: string, _password: string, name: string, role: UserRole): Promise<boolean> => {
-    try {
-      console.log("Signup attempt:", email);
-
-      let users: User[] = [];
-
+    async (email: string, password: string, name: string): Promise<boolean> => {
       try {
-        const raw = localStorage.getItem(USERS_KEY);
-        users = raw ? JSON.parse(raw) : [];
-      } catch {
-        users = [];
-      }
+        const response = await fetch("http://localhost:8000/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            phone: "9999999999",
+          }),
+        });
 
-      console.log("Existing users:", users);
+        if (!response.ok) return false;
 
-      if (users.some((u) => u.email === email)) {
-        console.log("Email already exists");
+        // auto-login after signup
+        const loginSuccess = await fetch("http://localhost:8000/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await loginSuccess.json();
+
+        setUser(data.user);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+
+        return true;
+      } catch (err) {
+        console.error(err);
         return false;
       }
-
-      const newUser: User = {
-  id: Date.now().toString(),
-  email,
-  name,
-  role,
-};
-
-      users.push(newUser);
-
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-      setUser(newUser);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-
-      console.log("Signup success:", newUser);
-
-      return true;
-    } catch (err) {
-      console.error("Signup error:", err);
-      return false;
-    }
-  },
-  []
-);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     setUser(null);

@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getRoleDashboardPath } from "@/lib/roles";
-import USSDAlert from "@/components/ui/USSDAlert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,23 +25,66 @@ export default function LoginPage() {
     setLoading(true);
 
     const success = await login(email, password);
-    setLoading(false);
-
+    
     if (success) {
       try {
-        const users = JSON.parse(
-          localStorage.getItem("satarkmitra_users") || "[]"
-        );
+        const user = JSON.parse(localStorage.getItem("satarkmitra_user") || "null");
 
-        const user = users.find((u: any) => u.email === email);
+if (!user) {
+  toast({
+    title: "Error",
+    description: "User session not found.",
+    variant: "destructive",
+  });
+  setLoading(false);
+  return;
+}
 
-        if (!user) {
-          toast({
-            title: "Error",
-            description: "User data not found. Please sign up again.",
-            variant: "destructive",
-          });
-          return;
+        // 🔐 SECURITY: If user is admin, get backend session token
+        if (user.role === "admin") {
+          try {
+            const formData = new URLSearchParams();
+            formData.append("email", email);
+            formData.append("password", password);
+
+            const response = await fetch("http://localhost:8000/admin/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData.toString()
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              
+              // Store admin session with expiry
+              const sessionData = {
+                token: data.token,
+                email: data.email,
+                name: data.name,
+                expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
+                created_at: new Date().toISOString()
+              };
+              
+              localStorage.setItem("admin_session", JSON.stringify(sessionData));
+              
+              toast({
+                title: "Admin Login Successful",
+                description: `Welcome back, ${data.name}. Session expires in ${data.expires_in}.`,
+              });
+              
+              console.log("✅ Admin session stored with expiry");
+            } else {
+              console.warn("⚠️ Admin token fetch failed, using local auth only");
+              toast({
+                title: "Admin Login",
+                description: "Logged in with local authentication",
+              });
+            }
+          } catch (error) {
+            console.error("Admin token error:", error);
+          }
         }
 
         navigate(getRoleDashboardPath(user.role));
@@ -60,22 +102,21 @@ export default function LoginPage() {
         variant: "destructive",
       });
     }
+    
+    setLoading(false);
   };
 
   const handleOfflineMode = () => {
-    // Works best on mobile devices
     window.location.href = "tel:*123#";
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative">
       
-      {/* Theme Toggle */}
       <div className="absolute top-4 right-4 z-20">
         <ThemeToggle />
       </div>
 
-      {/* Background */}
       <div className="absolute inset-0 bg-hero-pattern opacity-50" />
 
       <motion.div
@@ -85,7 +126,6 @@ export default function LoginPage() {
       >
         <div className="glass-card p-8">
 
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-3">
               <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
@@ -100,10 +140,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -116,7 +154,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -142,7 +179,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <Button
               type="submit"
               className="w-full"
@@ -153,7 +189,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Offline Mode */}
           <button
             onClick={handleOfflineMode}
             className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
@@ -161,7 +196,6 @@ export default function LoginPage() {
             📞 Offline Mode (*384*41482#)
           </button>
 
-          {/* Signup Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
             <Link
@@ -171,6 +205,13 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              <strong>Demo Credentials:</strong><br />
+              Admin: admin@satarkmitra.com / admin123
+            </p>
+          </div>
 
         </div>
       </motion.div>
