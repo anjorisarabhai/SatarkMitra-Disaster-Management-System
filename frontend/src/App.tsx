@@ -53,7 +53,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/dashboard/government" element={
-              <ProtectedRoute allowedRoles={["government"]}>
+              <ProtectedRoute allowedRoles={["govt_official"]}>
                 <GovernmentDashboard />
               </ProtectedRoute>
             } />

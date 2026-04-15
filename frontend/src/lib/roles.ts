@@ -1,6 +1,6 @@
 import { Users, ShieldAlert, Building2, Radio, Settings, type LucideIcon } from "lucide-react";
 
-export type UserRole = "citizen" | "first_responder" | "government" | "control_room" | "admin";
+export type UserRole = "citizen" | "first_responder" | "govt_official" | "control_room" | "admin";
 
 export interface RoleOption {
   value: UserRole;
@@ -12,7 +12,7 @@ export interface RoleOption {
 export const ROLE_OPTIONS: RoleOption[] = [
   { value: "citizen", label: "Citizen", description: "Alerts, safety guidance & reporting", icon: Users },
   { value: "first_responder", label: "First Responder", description: "Emergency response & rescue ops", icon: ShieldAlert },
-  { value: "government", label: "Government / Authority", description: "Analytics, predictions & planning", icon: Building2 },
+  { value: "govt_official", label: "Government / Authority", description: "Analytics, predictions & planning", icon: Building2 },
   { value: "control_room", label: "Control Room", description: "Live monitoring & coordination", icon: Radio },
   { value: "admin", label: "Admin", description: "System administration", icon: Settings },
 ];
@@ -21,7 +21,7 @@ export function getRoleDashboardPath(role: UserRole): string {
   const paths: Record<UserRole, string> = {
     citizen: "/dashboard/citizen",
     first_responder: "/dashboard/responder",
-    government: "/dashboard/government",
+    govt_official: "/dashboard/government",
     control_room: "/dashboard/control-room",
     admin: "/dashboard/admin",
   };
