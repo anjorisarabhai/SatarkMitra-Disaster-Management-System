@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Radio, MapPin, Users, AlertTriangle, Phone, Clock,
   Navigation, CheckCircle2, XCircle, Siren, Send,
-  MessageSquare, ChevronRight
+  MessageSquare, ChevronRight, Shield
 } from "lucide-react";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
 import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
+import Chatbot from "@/components/Chatbot";
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -345,6 +346,25 @@ export default function ControlRoomDashboard() {
           <ResourceAvailability />
           <ShelterCapacityTracker />
         </div>
+
+        {/* 🤖 AI Control Room Assistant */}
+        <Card className="mt-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              AI Control Room Assistant
+              <Badge variant="outline" className="ml-2 text-xs">Live</Badge>
+            </CardTitle>
+            <CardDescription>
+              Ask about active incidents, team status, or coordination
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <Chatbot embedded={true} />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

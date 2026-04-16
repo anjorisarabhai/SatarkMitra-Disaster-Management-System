@@ -11,10 +11,11 @@ import {
   CheckCircle2,
   ArrowUpDown,
   Siren,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/layout/DashboardHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -23,6 +24,7 @@ import { ResourceAvailability } from "@/components/emergency/ResourceAvailabilit
 import { ShelterCapacityTracker } from "@/components/emergency/ShelterCapacityTracker";
 import { AlertTimeline } from "@/components/emergency/AlertTimeline";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
+import Chatbot from "@/components/Chatbot";
 
 const RESPONDER_SHELTERS = [
   { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
@@ -471,6 +473,25 @@ export default function FirstResponderDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* 🤖 AI Responder Assistant */}
+        <Card className="mt-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              AI Responder Assistant
+              <Badge variant="outline" className="ml-2 text-xs">Live</Badge>
+            </CardTitle>
+            <CardDescription>
+              Ask about urgent reports, team locations, or optimal routes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <Chatbot embedded={true} />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

@@ -5,7 +5,7 @@ import {
   Settings, Users, ShieldCheck, Activity, Server,
   Database, Cpu, HardDrive, RefreshCw, Search,
   ChevronDown, MoreHorizontal, CheckCircle2, XCircle, Clock,
-  UserPlus
+  UserPlus, Shield
 } from "lucide-react";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ROLE_OPTIONS, type UserRole } from "@/lib/roles";
+import Chatbot from "@/components/Chatbot";
 
 /* ── mock data ── */
 const systemServices = [
@@ -321,6 +322,25 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 🤖 AI Safety Assistant */}
+        <Card className="mt-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              AI Admin Assistant
+              <Badge variant="outline" className="ml-2 text-xs">Live</Badge>
+            </CardTitle>
+            <CardDescription>
+              Ask about system health, user stats, or audit logs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <Chatbot embedded={true} />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

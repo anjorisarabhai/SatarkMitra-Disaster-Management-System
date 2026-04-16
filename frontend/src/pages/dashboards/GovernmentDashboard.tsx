@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3, Droplets, TrendingUp, AlertTriangle, MapPin,
-  Activity, ThermometerSun, Wind, CloudRain, Gauge
+  Activity, ThermometerSun, Wind, CloudRain, Gauge, Shield
 } from "lucide-react";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { LiveIndicator } from "@/components/ui/LiveIndicator";
@@ -21,6 +21,7 @@ import {
 import { RiskPulseWidget } from "@/components/emergency/RiskPulseWidget";
 import { AIExplanation } from "@/components/emergency/AIExplanation";
 import { ResourceAvailability } from "@/components/emergency/ResourceAvailability";
+import Chatbot from "@/components/Chatbot";
 
 
 /* ── mock data ── */
@@ -317,6 +318,25 @@ export default function GovernmentDashboard() {
             <AIExplanation />
           </div>
         </div>
+
+        {/* 🤖 AI Government Assistant */}
+        <Card className="mt-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              AI Government Assistant
+              <Badge variant="outline" className="ml-2 text-xs">Live</Badge>
+            </CardTitle>
+            <CardDescription>
+              Ask about risk summaries, zone analytics, or population exposure
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <Chatbot embedded={true} />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

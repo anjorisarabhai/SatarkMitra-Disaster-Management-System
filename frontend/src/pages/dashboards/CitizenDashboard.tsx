@@ -10,12 +10,14 @@ import DelhiHotspotMap from "@/components/maps/DelhiHotspotMap";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { submitReport } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import Chatbot from "@/components/Chatbot";
 
 import { EmergencyModeToggle } from "@/components/emergency/EmergencyModeToggle";
 import { OneTapDistress } from "@/components/emergency/OneTapDistress";
@@ -347,6 +349,25 @@ export default function CitizenDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 🤖 AI Safety Assistant */}
+        <Card className="mt-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              AI Safety Assistant
+              <Badge variant="outline" className="ml-2 text-xs">Live</Badge>
+            </CardTitle>
+            <CardDescription>
+              Ask me about flood safety, shelters, or emergency help
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[500px]">
+              <Chatbot embedded={true} />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

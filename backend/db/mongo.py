@@ -17,7 +17,10 @@ db = mongo_client["satarkmitra"]
 
 citizen_reports = db["citizen_reports"]
 
-# ✅ NEW COLLECTIONS
+# ✅ USER & ALERT COLLECTIONS
 users_collection = db["users"]
 alerts_collection = db["alerts"]
 subscribers_collection = db["subscribers"]
+
+# 🆕 CHAT HISTORY COLLECTION (for persistent multi-turn conversations)
+chat_history_collection = db["chat_history"]

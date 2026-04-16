@@ -36,7 +36,7 @@ export default function SignupPage() {
       return;
     }
     setLoading(true);
-    const success = await signup(email, password, name, role);
+    const success = await signup(email, password, name);
     setLoading(false);
 
     if (success) {
