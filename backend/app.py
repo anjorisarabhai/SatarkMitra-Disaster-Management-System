@@ -275,15 +275,17 @@ delhi_model = safe_load_joblib(os.path.join(MODEL_DIR, "drainage_risk_model.pkl"
 # =====================================================
 
 def generate_delhi_hotspots():
-    lat_min, lat_max = 28.40, 28.88
-    lon_min, lon_max = 76.84, 77.35
-    step = 0.05
+    lat_min, lat_max = 28.50, 28.85
+    lon_min, lon_max = 77.00, 77.30
+    step = 0.03
     hotspots = []
 
     for lat in np.arange(lat_min, lat_max, step):
         for lon in np.arange(lon_min, lon_max, step):
+            if lon < 77.00:
+                continue
             hotspots.append({
-                "name": f"Cell_{round(lat,3)}_{round(lon,3)}",
+                "name": f"Delhi_Cell_{round(lat,3)}_{round(lon,3)}",
                 "lat": float(lat),
                 "lon": float(lon),
                 "elevation": 210,
