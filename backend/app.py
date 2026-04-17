@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from random import random
+
 from fastapi import FastAPI, HTTPException, Query, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from fastapi import FastAPI, Form
+from sympy import limit
 from utils.sentiment import analyze_report
 from sms import send_alert_to_all
 from db.mongo import (
@@ -274,26 +277,64 @@ delhi_model = safe_load_joblib(os.path.join(MODEL_DIR, "drainage_risk_model.pkl"
 # GENERATE DELHI MICRO HOTSPOTS
 # =====================================================
 
+def is_delhi_region(lat, lon):
+    return (
+        28.45 <= lat <= 28.90 and
+        77.02 <= lon <= 77.33
+    )
+
+
 def generate_delhi_hotspots():
-    lat_min, lat_max = 28.50, 28.85
-    lon_min, lon_max = 77.00, 77.30
-    step = 0.03
+    lat_min, lat_max = 28.45, 28.90
+    lon_min, lon_max = 77.00, 77.35
+
+    step = 0.02
     hotspots = []
 
     for lat in np.arange(lat_min, lat_max, step):
         for lon in np.arange(lon_min, lon_max, step):
-            if lon < 77.00:
+
+            if not is_delhi_region(lat, lon):
                 continue
+
             hotspots.append({
-                "name": f"Delhi_Cell_{round(lat,3)}_{round(lon,3)}",
+                "name": f"Delhi_{round(lat,3)}_{round(lon,3)}",
                 "lat": float(lat),
                 "lon": float(lon),
                 "elevation": 210,
                 "drainage": "MODERATE"
             })
+
     return hotspots
 
+
 DELHI_ZONES = generate_delhi_hotspots()
+
+def get_balanced_zones(zones, limit):
+    north, central, south = [], [], []
+
+    for z in zones:
+        lat = z["lat"]
+
+        if lat > 28.75:
+            north.append(z)
+        elif lat > 28.60:
+            central.append(z)
+        else:
+            south.append(z)
+
+    per_region = max(1, limit // 3)
+
+    import random
+    random.seed(42)
+
+    selected = (
+        random.sample(north, min(per_region, len(north))) +
+        random.sample(central, min(per_region, len(central))) +
+        random.sample(south, min(per_region, len(south)))
+    )
+
+    return selected[:limit]
 
 # =====================================================
 # 🆕 HELPER: Get Delhi Zones Data (FIXED)
@@ -315,7 +356,10 @@ def get_delhi_zones_data(limit: int = 30) -> list:
             return "MODERATE"
         return "LOW"
 
-    for z in DELHI_ZONES[:limit]:
+    import random
+    random.seed(42)  # ✅ stable output
+    zones = get_balanced_zones(DELHI_ZONES, limit)
+    for z in zones[:limit]:
         rainfall = np.random.uniform(40, 90)
         runoff = np.random.uniform(0.8, 1.5)
 
