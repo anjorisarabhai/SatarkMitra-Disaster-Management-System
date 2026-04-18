@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import DelhiMapLegend from "@/components/maps/DelhiMapLegend";
 import { motion } from "framer-motion";
 import {
   AlertTriangle, MapPin, Phone, FileText, Navigation, Bell,
@@ -332,12 +333,23 @@ export default function CitizenDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Delhi Flood Hotspots</p>
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Delhi Flood Hotspots</p>
+
+                  <div className="grid grid-cols-[220px_1fr] gap-3">
+
+                    {/* ✅ LEGEND OUTSIDE */}
+                    <div className="w-[220px] flex-shrink-0">
+                      <DelhiMapLegend />
+                    </div>
+
+                    {/* ✅ MAP */}
                     <div className="aspect-video rounded-xl overflow-hidden border border-border/50">
                       <DelhiHotspotMap />
                     </div>
+
                   </div>
+                </div>
                   <div>
                     <p className="text-sm font-medium text-foreground mb-2">Kedarnath Region</p>
                     <div className="aspect-video rounded-xl overflow-hidden border border-border/50">

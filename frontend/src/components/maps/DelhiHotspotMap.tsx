@@ -140,32 +140,40 @@ export default function DelhiHotspotMap({
   const text = useMemo(() => translations[lang] || translations.en, [lang]);
   const centerPosition = useMemo(() => [28.6139, 77.209] as [number, number], []);
 
-  // Initialize map
-  useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+// Initialize map
+useEffect(() => {
+  if (!containerRef.current || mapRef.current) return;
 
-    const map = L.map(containerRef.current, {
-      zoomControl: true,
-      attributionControl: true,
-    }).setView(centerPosition, 11);
+  const map = L.map(containerRef.current, {
+    zoomControl: true,
+    attributionControl: true,
+  }).setView(centerPosition, 11);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
 
-    mapRef.current = map;
+  mapRef.current = map;
 
-    const t = window.setTimeout(() => map.invalidateSize(), 100);
+  // ✅🔥 ADD THIS BLOCK (DO NOT REMOVE ANYTHING ELSE)
+  setTimeout(() => {
+    document.querySelectorAll(".leaflet-control").forEach((el) => {
+      if (el.innerHTML.toLowerCase().includes("legend")) {
+        el.remove();
+      }
+    });
+  }, 200);
 
-    return () => {
-      window.clearTimeout(t);
-      map.remove();
-      mapRef.current = null;
-      markersRef.current = [];
-    };
-  }, []);
+  const t = window.setTimeout(() => map.invalidateSize(), 100);
 
+  return () => {
+    window.clearTimeout(t);
+    map.remove();
+    mapRef.current = null;
+    markersRef.current = [];
+  };
+}, []);
   // Update markers
   useEffect(() => {
     const map = mapRef.current;

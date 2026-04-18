@@ -28,6 +28,7 @@ import {
   Volume2,
   Languages,
 } from "lucide-react";
+import USSDAlert from "@/components/ui/USSDAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RiskBadge } from "@/components/ui/RiskBadge";
@@ -39,9 +40,6 @@ import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
-import USSDAlert from "@/components/ui/USSDAlert";
-
-
 
 const DELHI_SHELTERS = [
   { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
@@ -560,8 +558,6 @@ export default function DelhiDashboard() {
       )}
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-          <USSDAlert />
-
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="glass-card p-4">
@@ -642,148 +638,182 @@ export default function DelhiDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid lg:grid-cols-3 gap-6"
+            className="w-full space-y-6"
           >
-            <div className="lg:col-span-2">
-              <div className="glass-card overflow-hidden">
-                <div className="p-4 border-b border-border/50 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                      <Map className="w-5 h-5 text-primary" />
-                      {text.liveMap}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{text.clickDetails}</p>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-risk-low/10 rounded-full">
-                    <Radio className="w-3.5 h-3.5 text-risk-low animate-pulse" />
-                    <span className="text-xs font-medium text-risk-low">Live</span>
-                  </div>
-                </div>
-                {/* Map Filters */}
-                <div className="flex gap-3 p-4 border-b border-border/50">
-                  <select
-                    value={selectedRisk}
-                    onChange={(e) => setSelectedRisk(e.target.value)}
-                    className="px-3 py-2 rounded-lg border bg-background text-sm"
-                  >
-                    <option value="ALL">All Risk Levels</option>
-                    <option value="CRITICAL">Critical</option>
-                    <option value="HIGH">High</option>
-                    <option value="MODERATE">Moderate</option>
-                    <option value="LOW">Low</option>
-                  </select>
+            {/* ===== TOP SECTION: MAP ===== */}
+            <div className="grid lg:grid-cols-3 gap-6 w-full">
 
-                  <select
-                    value={selectedZone}
-                    onChange={(e) => setSelectedZone(e.target.value)}
-                    className="px-3 py-2 rounded-lg border bg-background text-sm"
-                  >
-                    <option value="ALL">All Zones</option>
-                    {zones.map((z) => (
-                      <option key={z.zone_name} value={z.zone_name}>
-                        {z.zone_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative h-[500px]">
-                  {/* Risk Range Filter */}
-                  <div className="absolute top-4 left-4 z-10">
+              {/* LEFT: MAP */}
+              <div className="lg:col-span-2 w-full">
+                <div className="glass-card overflow-hidden h-full">
+
+                  {/* HEADER */}
+                  <div className="p-4 border-b border-border/50 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Map className="w-5 h-5 text-primary" />
+                        {text.liveMap}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {text.clickDetails}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-risk-low/10 rounded-full">
+                      <Radio className="w-3.5 h-3.5 text-risk-low animate-pulse" />
+                      <span className="text-xs font-medium text-risk-low">Live</span>
+                    </div>
+                  </div>
+
+                  {/* FILTERS */}
+                  <div className="flex gap-3 p-4 border-b border-border/50">
                     <select
-                      value={riskRange}
-                      onChange={(e) => setRiskRange(e.target.value)}
+                      value={selectedRisk}
+                      onChange={(e) => setSelectedRisk(e.target.value)}
                       className="px-3 py-2 rounded-lg border bg-background text-sm"
                     >
-                      <option value="ALL">All Risk Scores</option>
-                      <option value="0-100">0 – 100</option>
-                      <option value="100-500">100 – 500</option>
-                      <option value="500-1000">500 – 1000</option>
-                      <option value="1000-1500">1000 – 1500</option>
-                      <option value="1500-2000">1500 – 2000</option>
-                      <option value="2000+">2000+</option>
+                      <option value="ALL">All Risk Levels</option>
+                      <option value="CRITICAL">Critical</option>
+                      <option value="HIGH">High</option>
+                      <option value="MODERATE">Moderate</option>
+                      <option value="LOW">Low</option>
+                    </select>
+
+                    <select
+                      value={selectedZone}
+                      onChange={(e) => setSelectedZone(e.target.value)}
+                      className="px-3 py-2 rounded-lg border bg-background text-sm"
+                    >
+                      <option value="ALL">All Zones</option>
+                      {zones.map((z) => (
+                        <option key={z.zone_name} value={z.zone_name}>
+                          {z.zone_name}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                  <Suspense
-                    fallback={
-                      <div className="h-full w-full bg-secondary/20 animate-pulse flex items-center justify-center text-muted-foreground">
-                        Loading Map...
+
+                  {/* MAP + LEGEND */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 h-[500px] w-full">
+
+                    {/* LEGEND */}
+                    <div className="w-full lg:w-[240px] p-2">
+                      <Suspense fallback={null}>
+                        <DelhiMapLegend lang={lang} />
+                      </Suspense>
+                    </div>
+
+                    {/* MAP */}
+                    <div className="relative w-full h-full">
+
+                      {/* Risk Filter */}
+                      <div className="absolute top-4 left-4 z-10">
+                        <select
+                          value={riskRange}
+                          onChange={(e) => setRiskRange(e.target.value)}
+                          className="px-3 py-2 rounded-lg border bg-background text-sm"
+                        >
+                          <option value="ALL">All Risk Scores</option>
+                          <option value="0-100">0 – 100</option>
+                          <option value="100-500">100 – 500</option>
+                          <option value="500-1000">500 – 1000</option>
+                          <option value="1000-1500">1000 – 1500</option>
+                          <option value="1500-2000">1500 – 2000</option>
+                          <option value="2000+">2000+</option>
+                        </select>
                       </div>
-                    }
-                  >
-                    <DelhiHotspotMap
-                      zones={filteredZones}
-                      reports={reports}
-                      lang={lang}
-                      onZoneClick={(name) => {
-                        cardRefs.current[name]?.scrollIntoView({ behavior: "smooth" });
-                      }}
-                    />
-                  </Suspense>
-                  <div className="absolute bottom-4 left-4 z-[1000]">
-                    <Suspense fallback={null}>
-                      <DelhiMapLegend lang={lang} />
-                    </Suspense>
+
+                      <Suspense
+                        fallback={
+                          <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                            Loading Map...
+                          </div>
+                        }
+                      >
+                        <DelhiHotspotMap
+                          zones={filteredZones}
+                          reports={reports}
+                          lang={lang}
+                          onZoneClick={(name) => {
+                            cardRefs.current[name]?.scrollIntoView({
+                              behavior: "smooth",
+                            });
+                          }}
+                        />
+                      </Suspense>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              {/* Highest Risk */}
-              <div className="glass-card overflow-hidden border-destructive/20">
-                <div className="p-4 bg-gradient-to-r from-destructive/10 to-risk-high/10 border-b border-destructive/20">
-                  <h3 className="font-semibold text-destructive flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    {text.highestRisk}
-                  </h3>
-                </div>
-                <div className="p-3 space-y-2">
-                  {topHotspots.map((z, i) => (
-                    <div
-                      key={i}
-                      onClick={() => cardRefs.current[z.zone_name]?.scrollIntoView({ behavior: "smooth" })}
-                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-destructive/20 text-destructive text-xs font-bold flex items-center justify-center">
-                          {i + 1}
-                        </span>
-                        <div>
-                          <p className="font-medium text-foreground text-sm">{z.zone_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {text.riskScore}: {z.risk_score}
-                          </p>
+              {/* RIGHT: SIDE PANELS */}
+              <div className="grid gap-6">
+
+                {/* Highest Risk */}
+                <div className="glass-card overflow-hidden border-destructive/20">
+                  <div className="p-4 bg-gradient-to-r from-destructive/10 to-risk-high/10 border-b border-destructive/20">
+                    <h3 className="font-semibold text-destructive flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      {text.highestRisk}
+                    </h3>
+                  </div>
+
+                  <div className="p-3 space-y-2">
+                    {topHotspots.map((z, i) => (
+                      <div
+                        key={i}
+                        onClick={() =>
+                          cardRefs.current[z.zone_name]?.scrollIntoView({
+                            behavior: "smooth",
+                          })
+                        }
+                        className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-destructive/20 text-destructive text-xs flex items-center justify-center">
+                            {i + 1}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium">{z.zone_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {text.riskScore}: {z.risk_score}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <RiskBadge level={z.risk_status as any} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Rainfall Trend */}
-              <div className="glass-card overflow-hidden">
-                <div className="p-4 border-b border-border/50">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    {text.rainTrend}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{text.forecast}</p>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-end justify-between gap-2 h-32">
-                    {forecast.map((f, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                        <span className="text-xs font-medium text-muted-foreground">{f.value}mm</span>
-                        <div
-                          className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md transition-all"
-                          style={{ height: `${f.value * 2.5}px` }}
-                        />
-                        <span className="text-xs text-muted-foreground">{f.hour}</span>
+                        <RiskBadge level={z.risk_status as any} />
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Rainfall Trend */}
+                <div className="glass-card overflow-hidden">
+                  <div className="p-4 border-b border-border/50">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      {text.rainTrend}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {text.forecast}
+                    </p>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex items-end gap-2 h-32">
+                      {forecast.map((f, i) => (
+                        <div key={i} className="flex flex-col items-center flex-1">
+                          <span className="text-xs">{f.value}mm</span>
+                          <div
+                            className="w-full bg-gradient-to-t from-primary to-accent rounded-t-md"
+                            style={{ height: `${f.value * 2.5}px` }}
+                          />
+                          <span className="text-xs">{f.hour}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </motion.div>
