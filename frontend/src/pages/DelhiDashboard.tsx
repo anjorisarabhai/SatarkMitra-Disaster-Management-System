@@ -41,12 +41,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Switch } from "@/components/ui/switch";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
 
-const DELHI_SHELTERS = [
-  { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
-  { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
-  { name: "Relief Camp, Dwarka Sec 10", lat: 28.58, lng: 77.05, capacity: 300, occupancy: 120 },
-];
-
 // Lazy load the maps
 const DelhiHotspotMap = lazy(() => import("@/components/maps/DelhiHotspotMap"));
 const DelhiMapLegend = lazy(() => import("@/components/maps/DelhiMapLegend"));
@@ -172,6 +166,20 @@ const translations = {
 };
 
 export default function DelhiDashboard() {
+
+  const [shelters, setShelters] = useState([
+    { name: "Community Hall, Lajpat Nagar", lat: 28.57, lng: 77.24, capacity: 200, occupancy: 85 },
+    { name: "Govt School, Karol Bagh", lat: 28.65, lng: 77.19, capacity: 150, occupancy: 60 },
+    { name: "Relief Camp, Dwarka Sec 10", lat: 28.58, lng: 77.05, capacity: 300, occupancy: 120 },
+
+    { name: "NDMC Shelter, Connaught Place", lat: 28.6315, lng: 77.2167, capacity: 250, occupancy: 140 },
+    { name: "Community Center, Rohini Sec 15", lat: 28.7341, lng: 77.1025, capacity: 180, occupancy: 90 },
+    { name: "Govt School, Saket", lat: 28.5244, lng: 77.2066, capacity: 200, occupancy: 70 },
+    { name: "Relief Camp, Janakpuri", lat: 28.6219, lng: 77.0878, capacity: 220, occupancy: 110 },
+    { name: "Community Hall, Pitampura", lat: 28.6969, lng: 77.1315, capacity: 160, occupancy: 80 },
+    { name: "Shelter Point, Vasant Vihar", lat: 28.5672, lng: 77.1585, capacity: 140, occupancy: 65 },
+    { name: "Emergency Camp, Okhla", lat: 28.5355, lng: 77.2721, capacity: 300, occupancy: 150 },
+  ]);
   const navigate = useNavigate();
   const { largeText, voiceAlerts, simpleLanguage, setLargeText, setVoiceAlerts, setSimpleLanguage } = useAccessibility();
   const [lang, setLang] = useState<"en" | "hi">("en");
@@ -288,6 +296,24 @@ export default function DelhiDashboard() {
 
     return () => clearInterval(interval);
   }, [zones]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShelters(prev =>
+        prev.map(s => {
+          const change = Math.floor(Math.random() * 20 - 10);
+          let occ = s.occupancy + change;
+
+          if (occ < 0) occ = 0;
+          if (occ > s.capacity) occ = s.capacity;
+
+          return { ...s, occupancy: occ };
+        })
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const applyRainSimulation = (zone: Zone): Zone => {
     let score = zone.risk_score;
@@ -1131,7 +1157,7 @@ export default function DelhiDashboard() {
               <p className="text-sm text-muted-foreground">Click a shelter marker or use "Nearest Shelter" button</p>
             </div>
             <div className="h-[400px]">
-              <ShelterRouteMap shelters={DELHI_SHELTERS} center={[28.6139, 77.209]} />
+              <ShelterRouteMap shelters={shelters} center={[28.6139, 77.209]} />
             </div>
           </div>
         </div>
