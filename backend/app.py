@@ -198,13 +198,39 @@ delhi_model = safe_load_joblib(os.path.join(MODEL_DIR, "drainage_risk_model.pkl"
 # =====================================================
 # GENERATE DELHI MICRO HOTSPOTS (2500+)
 # =====================================================
+location_cache = {}
+
+def get_location_name(lat, lon):
+    key = f"{round(lat,3)}_{round(lon,3)}"
+
+    if key in location_cache:
+        return location_cache[key]
+
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+        res = requests.get(url, timeout=5, headers={"User-Agent": "satarkmitra"}).json()
+
+        address = res.get("address", {})
+
+        name = (
+            address.get("suburb")
+            or address.get("neighbourhood")
+            or address.get("road")
+            or address.get("city")
+            or "Unknown"
+        )
+
+        location_cache[key] = name
+        return name
+
+    except:
+        return "Unknown"
 
 def generate_delhi_hotspots():
+    lat_min, lat_max = 28.45, 28.75
+    lon_min, lon_max = 77.05, 77.30
 
-    lat_min, lat_max = 28.40, 28.88
-    lon_min, lon_max = 76.84, 77.35
-
-    step = 0.02
+    step = 0.05  # keep this (important)
 
     hotspots = []
 
@@ -212,7 +238,7 @@ def generate_delhi_hotspots():
         for lon in np.arange(lon_min, lon_max, step):
 
             hotspots.append({
-                "name": f"Delhi Zone ({round(lat,3)}, {round(lon,3)})",
+                "name": get_location_name(lat, lon),  # 🔥 THIS LINE CHANGED
                 "lat": float(lat),
                 "lon": float(lon),
                 "elevation": 210,
@@ -225,7 +251,6 @@ DELHI_ZONES = generate_delhi_hotspots()
 
 np.random.seed(42)  # ✅ keeps output stable
 
-KEDARNATH_SHELTERS = generate_kedarnath_shelters()
 
 # =====================================================
 # GENERATE KEDARNATH SHELTERS (DYNAMIC)
@@ -248,6 +273,8 @@ def generate_kedarnath_shelters():
             })
 
     return shelters
+
+KEDARNATH_SHELTERS = generate_kedarnath_shelters()
 # =====================================================
 # IMPROVED SCAM DETECTION ENGINE
 # =====================================================
