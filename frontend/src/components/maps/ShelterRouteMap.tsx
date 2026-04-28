@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Navigation, Loader2, X } from "lucide-react";
+import { Navigation, Loader2, X, MapPinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 // Fix Leaflet marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -89,24 +90,51 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
   const [routing, setRouting] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{ name: string; duration: number; distance: string } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
-  // Get user location
+  const { toast } = useToast();
+
+  // 🔥 FIX 1: Get user location - NEVER fallback to center silently
   const getUserLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      console.warn("Geolocation not supported by this browser");
+      setLocationDenied(true);
+      toast({
+        title: "Location Not Supported",
+        description: "Your browser does not support geolocation. Cannot show routes from your location.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLocating(true);
+    setLocationDenied(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        console.log("✅ USER LOCATION:", coords); // 🧪 DEBUG
+        setUserLocation(coords);
         setLocating(false);
+        setLocationDenied(false);
       },
-      () => {
-        // Fallback to center
-        setUserLocation(center);
+      (err) => {
+        // 🔥 FIX: DO NOT fallback to center
+        console.error("❌ Geolocation failed:", err.message); // 🧪 DEBUG
+        setUserLocation(null); // Keep null - don't silently use CP
         setLocating(false);
+        setLocationDenied(true);
+        toast({
+          title: "Location Required",
+          description: "Please enable location access to navigate to shelters. Check your browser settings.",
+          variant: "destructive",
+        });
       },
-      { timeout: 5000 }
+      { 
+        timeout: 10000,        // 🔥 FIX: Increased from 5000ms to 10000ms
+        enableHighAccuracy: true, // 🔥 FIX: Request GPS-level accuracy
+        maximumAge: 30000      // Allow cached position up to 30 seconds old
+      }
     );
-  }, [center]);
+  }, [toast]);
 
   // Initialize map
   useEffect(() => {
@@ -187,25 +215,51 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
     setRouteInfo(null);
   }, []);
 
+  // 🔥 FIX 2: Block routing without real location
   const routeToShelter = useCallback(
     async (shelter: Shelter) => {
       const map = mapRef.current;
       if (!map) return;
 
       let from = userLocation;
+      
+      // 🔥 FIX: Try to get location if not already available
       if (!from) {
-        // Try to get location first
         try {
           const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+            navigator.geolocation.getCurrentPosition(resolve, reject, { 
+              timeout: 10000, 
+              enableHighAccuracy: true 
+            })
           );
           from = [pos.coords.latitude, pos.coords.longitude];
+          console.log("✅ Location acquired for routing:", from); // 🧪 DEBUG
           setUserLocation(from);
-        } catch {
-          from = center;
-          setUserLocation(from);
+          setLocationDenied(false);
+        } catch (err) {
+          // 🔥 FIX: DO NOT fallback to center - STOP routing
+          console.error("❌ Routing aborted - no location available:", err); // 🧪 DEBUG
+          toast({
+            title: "Location Required",
+            description: "Unable to get your location. Please enable GPS/location services and try again.",
+            variant: "destructive",
+          });
+          return; // 🚨 STOP - don't route from CP
         }
       }
+
+      // 🔥 FIX 3: Double-check we have real location before routing
+      if (!from) {
+        console.warn("⚠️ No user location available for routing"); // 🧪 DEBUG
+        toast({
+          title: "Location Required",
+          description: "Your location is needed to calculate a route. Please enable location services.",
+        });
+        return;
+      }
+
+      // 🧪 DEBUG: Log the location being used
+      console.log("🗺️ Routing from:", from, "to:", [shelter.lat, shelter.lng]);
 
       setRouting(true);
       clearRoute();
@@ -242,22 +296,41 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
         setRouting(false);
       }
     },
-    [userLocation, center, clearRoute]
+    [userLocation, toast, clearRoute]
   );
 
+  // 🔥 FIX 4: Block "Nearest Shelter" without real location
   const navigateToNearest = useCallback(async () => {
     let from = userLocation;
+    
     if (!from) {
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+          navigator.geolocation.getCurrentPosition(resolve, reject, { 
+            timeout: 10000, 
+            enableHighAccuracy: true 
+          })
         );
         from = [pos.coords.latitude, pos.coords.longitude];
+        console.log("✅ Location acquired for nearest:", from); // 🧪 DEBUG
         setUserLocation(from);
-      } catch {
-        from = center;
-        setUserLocation(from);
+        setLocationDenied(false);
+      } catch (err) {
+        // 🔥 FIX: DO NOT fallback to center
+        console.error("❌ Cannot find nearest - no location:", err); // 🧪 DEBUG
+        toast({
+          title: "Location Required",
+          description: "Please enable location access to find the nearest shelter.",
+          variant: "destructive",
+        });
+        return; // 🚨 STOP
       }
+    }
+
+    // 🔥 FIX: Double-check location exists
+    if (!from) {
+      console.warn("⚠️ Location required for nearest shelter routing"); // 🧪 DEBUG
+      return;
     }
 
     let nearest = shelters[0];
@@ -271,7 +344,7 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
     });
 
     routeToShelter(nearest);
-  }, [userLocation, center, shelters, routeToShelter]);
+  }, [userLocation, shelters, routeToShelter, toast]);
 
   // Auto-locate on mount
   useEffect(() => {
@@ -299,6 +372,22 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
             <X className="w-3.5 h-3.5 mr-1.5" /> Clear Route
           </Button>
         )}
+        {/* 🔥 NEW: Retry location button when denied */}
+        {locationDenied && (
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            onClick={getUserLocation} 
+            disabled={locating}
+            className="shadow-lg"
+          >
+            {locating ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Retrying...</>
+            ) : (
+              <><MapPinOff className="w-3.5 h-3.5 mr-1.5" /> Retry Location</>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Route Info Banner */}
@@ -324,6 +413,18 @@ export default function ShelterRouteMap({ shelters, center, zoom = 12, className
       {locating && (
         <div className="absolute top-3 left-3 z-[1000] bg-background/90 border border-border rounded-lg px-3 py-1.5 shadow text-xs text-muted-foreground flex items-center gap-2">
           <Loader2 className="w-3 h-3 animate-spin" /> Detecting location...
+        </div>
+      )}
+
+      {/* 🔥 NEW: Location denied warning */}
+      {locationDenied && !locating && !userLocation && (
+        <div className="absolute top-3 left-3 z-[1000] bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2 shadow text-xs max-w-[200px]">
+          <p className="font-semibold text-destructive flex items-center gap-1.5">
+            <MapPinOff className="w-3 h-3" /> Location Required
+          </p>
+          <p className="text-muted-foreground mt-1">
+            Enable location to see routes. Shelters shown on map.
+          </p>
         </div>
       )}
 
