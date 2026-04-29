@@ -49,52 +49,220 @@ import { Switch } from "@/components/ui/switch";
 import ShelterRouteMap from "@/components/maps/ShelterRouteMap";
 
 const KEDARNATH_SHELTERS = [
-  { name: "सरकारी प्राथमिक विद्यालय आश्रय", lat: 30.72, lng: 79.05, capacity: 150, occupancy: 45, status: "Open" },
-  { name: "सामुदायिक भवन आश्रय", lat: 30.68, lng: 79.07, capacity: 250, occupancy: 200, status: "Open" },
-  { name: "पुराना मंदिर गेस्टहाउस", lat: 30.656, lng: 79.091, capacity: 80, occupancy: 80, status: "Full" },
+  {
+    name: { en: "Government Primary School Shelter", hi: "सरकारी प्राथमिक विद्यालय आश्रय" },
+    lat: 30.72,
+    lng: 79.05,
+    capacity: 150,
+    occupancy: 45,
+    status: "Open",
+  },
+  {
+    name: { en: "Community Hall Shelter", hi: "सामुदायिक भवन आश्रय" },
+    lat: 30.68,
+    lng: 79.07,
+    capacity: 250,
+    occupancy: 200,
+    status: "Open",
+  },
+  {
+    name: { en: "Old Temple Guesthouse", hi: "पुराना मंदिर गेस्टहाउस" },
+    lat: 30.656,
+    lng: 79.091,
+    capacity: 80,
+    occupancy: 80,
+    status: "Full",
+  },
 ];
 
 // Mock data
 const initialMockAlerts = [
-  { id: 1, type: "critical", title: "बाढ़ की चेतावनी", location: "मंदाकिनी नदी", time: "2 मिनट पहले", acknowledged: false },
-  { id: 2, type: "warning", title: "बढ़ता जल स्तर", location: "गौरीकुंड स्टेशन", time: "15 मिनट पहले", acknowledged: true },
-  { id: 3, type: "info", title: "निकासी मार्ग अपडेट", location: "मार्ग बी - पूर्व", time: "1 घंटा पहले", acknowledged: true },
+  {
+    id: 1,
+    type: "critical",
+    title: { en: "Flood warning", hi: "बाढ़ की चेतावनी" },
+    location: { en: "Mandakini River", hi: "मंदाकिनी नदी" },
+    time: { en: "2 minutes ago", hi: "2 मिनट पहले" },
+    acknowledged: false,
+  },
+  {
+    id: 2,
+    type: "warning",
+    title: { en: "Rising water level", hi: "बढ़ता जल स्तर" },
+    location: { en: "Gaurikund Station", hi: "गौरीकुंड स्टेशन" },
+    time: { en: "15 minutes ago", hi: "15 मिनट पहले" },
+    acknowledged: true,
+  },
+  {
+    id: 3,
+    type: "info",
+    title: { en: "Evacuation route update", hi: "निकासी मार्ग अपडेट" },
+    location: { en: "Route B - East", hi: "मार्ग बी - पूर्व" },
+    time: { en: "1 hour ago", hi: "1 घंटा पहले" },
+    acknowledged: true,
+  },
 ];
 
 const initialEmergencyContacts = [
-  { id: 1, name: "एनडीआरएफ कमांड सेंटर", role: "आपदा प्रतिक्रिया", contact: "108" },
-  { id: 2, name: "राज्य आपदा प्रबंधन", role: "समन्वय", contact: "1070" },
-  { id: 3, name: "जिला नियंत्रण कक्ष", role: "स्थानीय संचालन", contact: "1077" },
+  {
+    id: 1,
+    name: { en: "NDRF Command Center", hi: "एनडीआरएफ कमांड सेंटर" },
+    role: { en: "Disaster Response", hi: "आपदा प्रतिक्रिया" },
+    contact: "108",
+  },
+  {
+    id: 2,
+    name: { en: "State Disaster Management", hi: "राज्य आपदा प्रबंधन" },
+    role: { en: "Coordination", hi: "समन्वय" },
+    contact: "1070",
+  },
+  {
+    id: 3,
+    name: { en: "District Control Room", hi: "जिला नियंत्रण कक्ष" },
+    role: { en: "Local Operations", hi: "स्थानीय संचालन" },
+    contact: "1077",
+  },
 ];
 
 const waterStations = [
-  { id: "station-a", name: "मंदाकिनी नदी", location: "मंदिर पुल के पास", currentLevel: 8.5, status: "critical", capacity: 10.0, lastUpdated: "2 मिनट पहले" },
-  { id: "station-b", name: "गौरीकुंड स्टेशन", location: "प्रवेश बिंदु", currentLevel: 6.2, status: "warning", capacity: 9.0, lastUpdated: "1 मिनट पहले" },
-  { id: "station-c", name: "केदारनाथ बेस", location: "डाउनस्ट्रीम चौकी", currentLevel: 4.1, status: "normal", capacity: 8.5, lastUpdated: "3 मिनट पहले" },
+  {
+    id: "station-a",
+    name: { en: "Mandakini River", hi: "मंदाकिनी नदी" },
+    location: { en: "Near Temple Bridge", hi: "मंदिर पुल के पास" },
+    currentLevel: 8.5,
+    status: "critical",
+    capacity: 10.0,
+    lastUpdated: { en: "2 minutes ago", hi: "2 मिनट पहले" },
+  },
+  {
+    id: "station-b",
+    name: { en: "Gaurikund Station", hi: "गौरीकुंड स्टेशन" },
+    location: { en: "Entry Point", hi: "प्रवेश बिंदु" },
+    currentLevel: 6.2,
+    status: "warning",
+    capacity: 9.0,
+    lastUpdated: { en: "1 minute ago", hi: "1 मिनट पहले" },
+  },
+  {
+    id: "station-c",
+    name: { en: "Kedarnath Base", hi: "केदारनाथ बेस" },
+    location: { en: "Downstream Checkpoint", hi: "डाउनस्ट्रीम चौकी" },
+    currentLevel: 4.1,
+    status: "normal",
+    capacity: 8.5,
+    lastUpdated: { en: "3 minutes ago", hi: "3 मिनट पहले" },
+  },
 ];
 
 const initialProtocolsData = {
   normal: [
-    { id: 'n1', text: "हर 6 घंटे में जल स्तर की निगरानी करें।", completed: false },
-    { id: 'n2', text: "संचार प्रणालियों की साप्ताहिक जांच करें।", completed: false },
-    { id: 'n3', text: "सेंसर बैटरी स्तर सत्यापित करें।", completed: false }
+    {
+      id: 'n1',
+      text: {
+        en: "Monitor water levels every 6 hours.",
+        hi: "हर 6 घंटे में जल स्तर की निगरानी करें।",
+      },
+      completed: false,
+    },
+    {
+      id: 'n2',
+      text: {
+        en: "Check communications systems weekly.",
+        hi: "संचार प्रणालियों की साप्ताहिक जांच करें।",
+      },
+      completed: false,
+    },
+    {
+      id: 'n3',
+      text: {
+        en: "Verify sensor battery levels.",
+        hi: "सेंसर बैटरी स्तर सत्यापित करें।",
+      },
+      completed: false,
+    },
   ],
   warning: [
-    { id: 'w1', text: "निगरानी आवृत्ति हर घंटे बढ़ाएं।", completed: false },
-    { id: 'w2', text: "आपातकालीन प्रतिक्रिया टीमों को स्टैंडबाय पर रखें।", completed: false },
-    { id: 'w3', text: "पंजीकृत स्थानीय लोगों को एसएमएस अलर्ट भेजें।", completed: false }
+    {
+      id: 'w1',
+      text: {
+        en: "Increase monitoring frequency to hourly.",
+        hi: "निगरानी आवृत्ति हर घंटे बढ़ाएं।",
+      },
+      completed: false,
+    },
+    {
+      id: 'w2',
+      text: {
+        en: "Keep emergency response teams on standby.",
+        hi: "आपातकालीन प्रतिक्रिया टीमों को स्टैंडबाय पर रखें।",
+      },
+      completed: false,
+    },
+    {
+      id: 'w3',
+      text: {
+        en: "Send SMS alerts to registered locals.",
+        hi: "पंजीकृत स्थानीय लोगों को एसएमएस अलर्ट भेजें।",
+      },
+      completed: false,
+    },
   ],
   critical: [
-    { id: 'c1', text: "आपातकालीन संचालन केंद्र (ईओसी) सक्रिय करें।", completed: false },
-    { id: 'c2', text: "तत्काल निकासी आदेश जारी करें।", completed: false },
-    { id: 'c3', text: "एनडीआरएफ टीमों को निचले इलाकों में तैनात करें।", completed: false }
+    {
+      id: 'c1',
+      text: {
+        en: "Activate the emergency operations center (EOC).",
+        hi: "आपातकालीन संचालन केंद्र (ईओसी) सक्रिय करें।",
+      },
+      completed: false,
+    },
+    {
+      id: 'c2',
+      text: {
+        en: "Issue immediate evacuation orders.",
+        hi: "तत्काल निकासी आदेश जारी करें।",
+      },
+      completed: false,
+    },
+    {
+      id: 'c3',
+      text: {
+        en: "Deploy NDRF teams to low-lying areas.",
+        hi: "एनडीआरएफ टीमों को निचले इलाकों में तैनात करें।",
+      },
+      completed: false,
+    },
   ],
 };
 
 const nearbyResources = [
-  { id: 1, name: "सरकारी प्राथमिक विद्यालय आश्रय", location: "रामपुर गांव", dist: "2 किमी", capacity: 150, current_occupancy: 45, status: "Open" },
-  { id: 2, name: "सामुदायिक भवन आश्रय", location: "सीतापुर", dist: "3 किमी", capacity: 250, current_occupancy: 200, status: "Open" },
-  { id: 3, name: "पुराना मंदिर गेस्टहाउस", location: "गौरीकुंड", dist: "1.5 किमी", capacity: 80, current_occupancy: 80, status: "Full" },
+  {
+    id: 1,
+    name: { en: "Government Primary School Shelter", hi: "सरकारी प्राथमिक विद्यालय आश्रय" },
+    location: { en: "Rampur Village", hi: "रामपुर गांव" },
+    dist: "2 km",
+    capacity: 150,
+    current_occupancy: 45,
+    status: "Open",
+  },
+  {
+    id: 2,
+    name: { en: "Community Hall Shelter", hi: "सामुदायिक भवन आश्रय" },
+    location: { en: "Sheetapur", hi: "सीतापुर" },
+    dist: "3 km",
+    capacity: 250,
+    current_occupancy: 200,
+    status: "Open",
+  },
+  {
+    id: 3,
+    name: { en: "Old Temple Guesthouse", hi: "पुराना मंदिर गेस्टहाउस" },
+    location: { en: "Gaurikund", hi: "गौरीकुंड" },
+    dist: "1.5 km",
+    capacity: 80,
+    current_occupancy: 80,
+    status: "Full",
+  },
 ];
 
 const translations = {
@@ -263,25 +431,30 @@ const translations = {
   },
 };
 
+interface LocalizedString {
+  en: string;
+  hi: string;
+}
+
 interface Alert {
   id: number;
   type: string;
-  title: string;
-  location: string;
-  time: string;
+  title: LocalizedString;
+  location: LocalizedString;
+  time: LocalizedString;
   acknowledged: boolean;
 }
 
 interface Contact {
   id: number;
-  name: string;
-  role: string;
+  name: LocalizedString;
+  role: LocalizedString;
   contact: string;
 }
 
 interface Protocol {
   id: string;
-  text: string;
+  text: LocalizedString;
   completed: boolean;
 }
 
@@ -372,11 +545,13 @@ export default function KedarnathDashboard() {
 
   const handleAddAlert = (e: React.FormEvent) => {
     e.preventDefault();
-    const newAlertObject = { 
-      id: Date.now(), 
-      ...newAlert, 
-      time: lang === "hi" ? "अभी" : "Just now", 
-      acknowledged: false 
+    const newAlertObject = {
+      id: Date.now(),
+      type: newAlert.type,
+      title: { en: newAlert.title, hi: newAlert.title },
+      location: { en: newAlert.location, hi: newAlert.location },
+      time: { en: "Just now", hi: "अभी" },
+      acknowledged: false,
     };
     setAlerts([newAlertObject, ...alerts]);
     setIsAddAlertModalOpen(false);
@@ -385,7 +560,12 @@ export default function KedarnathDashboard() {
 
   const handleAddContact = (e: React.FormEvent) => {
     e.preventDefault();
-    const newContactObject = { id: Date.now(), ...newContact };
+    const newContactObject = {
+      id: Date.now(),
+      name: { en: newContact.name, hi: newContact.name },
+      role: { en: newContact.role, hi: newContact.role },
+      contact: newContact.contact,
+    };
     setContacts([...contacts, newContactObject]);
     setIsAddContactModalOpen(false);
     setNewContact({ name: "", role: "", contact: "" });
@@ -592,10 +772,10 @@ export default function KedarnathDashboard() {
               {waterStations.map((station) => (
                 <div key={station.id} className="glass-card p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">{station.name}</h3>
+                    <h3 className="font-semibold text-foreground">{station.name[lang]}</h3>
                     <RiskBadge level={station.status as any} />
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">{station.location}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{station.location[lang]}</p>
                   <div className="mb-4">
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold text-foreground">{station.currentLevel}m</span>
@@ -608,7 +788,7 @@ export default function KedarnathDashboard() {
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">{text.lastUpdated}: {station.lastUpdated}</p>
+                  <p className="text-xs text-muted-foreground">{text.lastUpdated}: {station.lastUpdated[lang]}</p>
                 </div>
               ))}
             </div>
@@ -766,10 +946,10 @@ export default function KedarnathDashboard() {
                             }`}
                           />
                           <div>
-                            <h3 className="font-bold text-foreground">{alert.title}</h3>
+                            <h3 className="font-bold text-foreground">{alert.title[lang]}</h3>
                             <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                               <MapPin className="w-3 h-3" />
-                              {alert.location} • {alert.time}
+                              {alert.location[lang]} • {alert.time[lang]}
                             </p>
                           </div>
                         </div>
@@ -802,8 +982,8 @@ export default function KedarnathDashboard() {
               <div className="grid md:grid-cols-3 gap-4">
                 {contacts.map((contact) => (
                   <div key={contact.id} className="glass-card p-5 text-center">
-                    <h3 className="font-semibold text-foreground mb-1">{contact.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{contact.role}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{contact.name[lang]}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{contact.role[lang]}</p>
                     <p className="text-2xl font-bold text-primary mb-4">{contact.contact}</p>
                     <Button className="w-full">{text.callNow}</Button>
                   </div>
@@ -867,7 +1047,7 @@ export default function KedarnathDashboard() {
                               item.completed ? "line-through text-muted-foreground" : "text-foreground"
                             }`}
                           >
-                            {item.text}
+                            {item.text[lang]}
                           </span>
                         </div>
                       ))}
@@ -888,51 +1068,56 @@ export default function KedarnathDashboard() {
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
-              {nearbyResources.map((resource) => {
-                const occupancyPct = (resource.current_occupancy / resource.capacity) * 100;
-                const isFull = resource.status === "Full";
+                {nearbyResources.map((resource) => {
+                  const occupancyPct = (resource.current_occupancy / resource.capacity) * 100;
+                  const isFull = resource.status === "Full";
 
-                return (
-                <div key={resource.id} className="glass-card p-5 flex flex-col justify-between">
-                  <div>
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground">{resource.name}</h3>
-                    <span className="text-xs font-medium bg-secondary px-2 py-1 rounded flex items-center gap-1">
-                    <Navigation className="w-3 h-3" />
-                    {resource.dist}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mb-4">
-                    <MapPin className="w-3 h-3" />
-                    {resource.location}
-                  </p>
+                  return (
+                    <div key={resource.id} className="glass-card p-5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-foreground">{resource.name[lang]}</h3>
+                          <span className="text-xs font-medium bg-secondary px-2 py-1 rounded flex items-center gap-1">
+                            <Navigation className="w-3 h-3" />
+                            {resource.dist}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mb-4">
+                          <MapPin className="w-3 h-3" />
+                          {resource.location[lang]}
+                        </p>
+                        <div className="mb-4">
+                          <div className="flex justify-between text-xs mb-1 text-muted-foreground">
+                            <span>{text.occupancy}</span>
+                            <span>
+                              {resource.current_occupancy} / {resource.capacity}
+                            </span>
+                          </div>
+                          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${
+                                isFull ? "progress-critical" : occupancyPct > 80 ? "progress-high" : "progress-low"
+                              }`}
+                              style={{ width: `${occupancyPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs mb-1 text-muted-foreground">
-                    <span>{text.occupancy}</span>
-                    <span>
-                      {resource.current_occupancy} / {resource.capacity}
-                    </span>
+                      <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                        <RiskBadge level={isFull ? "critical" : "low"}>
+                          {resource.status === "Open"
+                            ? lang === "hi"
+                              ? "खुला"
+                              : "Open"
+                            : lang === "hi"
+                            ? "भरा हुआ"
+                            : "Full"}
+                        </RiskBadge>
+                      </div>
                     </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${
-                      isFull ? "progress-critical" : occupancyPct > 80 ? "progress-high" : "progress-low"
-                      }`}
-                      style={{ width: `${occupancyPct}%` }}
-                    />
-                    </div>
-                  </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                  <RiskBadge level={isFull ? "critical" : "low"}>
-                    {resource.status === "Open" ? (lang === "hi" ? "खुला" : "Open") : (lang === "hi" ? "भरा हुआ" : "Full")}
-                  </RiskBadge>
-                  </div>
-                </div>
-                );
-              })}
+                  );
+                })}
               </div>
 
               {/* Shelter Route Map */}
@@ -944,7 +1129,14 @@ export default function KedarnathDashboard() {
                   <p className="text-sm text-muted-foreground">{text.mapInstructions}</p>
                 </div>
                 <div className="h-[400px]">
-                  <ShelterRouteMap shelters={KEDARNATH_SHELTERS} center={[30.735, 79.066]} zoom={13} />
+                  <ShelterRouteMap
+                    shelters={KEDARNATH_SHELTERS.map((s) => ({
+                      ...s,
+                      name: s.name[lang],
+                    }))}
+                    center={[30.735, 79.066]}
+                    zoom={13}
+                  />
                 </div>
               </div>
             </div>
