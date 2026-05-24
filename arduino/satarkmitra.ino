@@ -2,16 +2,19 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-#define TRIG D5        // GPIO14
-#define ECHO D3        // GPIO0 (UPDATED)
-#define SERVO_PIN D4   // GPIO2
+#define TRIG D5
+#define ECHO D3
+#define SERVO_PIN D4
+
+// YOUR PINS
+#define GREEN_LED D6
+#define RED_LED   D7
+#define BUZZER    D8
 
 long duration;
 float distance;
 
 Servo gateServo;
-
-// Change address if needed (0x27 or 0x3F)
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup() {
@@ -20,11 +23,19 @@ void setup() {
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
 
-  gateServo.attach(SERVO_PIN);
-  gateServo.write(0); // Gate CLOSED
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
 
-  // LCD setup
-  Wire.begin(D2, D1); // SDA, SCL
+  // Turn LEDs OFF initially (active LOW → HIGH = OFF)
+  digitalWrite(GREEN_LED, HIGH);
+  digitalWrite(RED_LED, HIGH);
+  digitalWrite(BUZZER, LOW);
+
+  gateServo.attach(SERVO_PIN);
+  gateServo.write(0);
+
+  Wire.begin(D2, D1);
   lcd.init();
   lcd.backlight();
 
@@ -35,18 +46,14 @@ void setup() {
 }
 
 void loop() {
-  // Ultrasonic Trigger
+  // Ultrasonic trigger
   digitalWrite(TRIG, LOW);
   delayMicroseconds(2);
-
   digitalWrite(TRIG, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG, LOW);
 
-  // Read Echo
   duration = pulseIn(ECHO, HIGH);
-
-  // Distance Calculation
   distance = duration * 0.034 / 2;
 
   Serial.print("Distance: ");
@@ -55,28 +62,41 @@ void loop() {
 
   String status = "";
 
-  // 🚪 Gate Logic
+  // 🚪 LOGIC (ACTIVE LOW LEDs)
   if (distance < 10) {
-    Serial.println("Water HIGH → Gate OPEN");
+    // 🚨 HIGH WATER
     gateServo.write(90);
     status = "Gate OPEN";
+
+    digitalWrite(RED_LED, LOW);     // ON
+    digitalWrite(GREEN_LED, HIGH);  // OFF
+    digitalWrite(BUZZER, HIGH);
   }
   else if (distance > 20) {
-    Serial.println("Water LOW → Gate CLOSED");
+    // ✅ LOW WATER
     gateServo.write(0);
     status = "Gate CLOSED";
+
+    digitalWrite(RED_LED, HIGH);    // OFF
+    digitalWrite(GREEN_LED, LOW);   // ON
+    digitalWrite(BUZZER, LOW);
+  }
+  else {
+    // ⚖️ SAFE ZONE
+    status = "Stable";
+
+    digitalWrite(RED_LED, HIGH);    // OFF
+    digitalWrite(GREEN_LED, LOW);   // ON
+    digitalWrite(BUZZER, LOW);
   }
 
-  // 📺 LCD Display
+  // 📺 LCD
   lcd.clear();
-
-  // Line 1 → Distance
   lcd.setCursor(0, 0);
   lcd.print("Dist: ");
   lcd.print(distance);
   lcd.print(" cm");
 
-  // Line 2 → Status
   lcd.setCursor(0, 1);
   lcd.print(status);
 
