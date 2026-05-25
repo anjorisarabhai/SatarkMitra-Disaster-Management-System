@@ -1,0 +1,17 @@
+earthengine-api
+geemap
+ipywidgets  
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+#earthengine authenticate
+python-dotenv
+transformers
+torch
+python-multipart
+fastapi
+twilio
+pymongo
+passlib[bcrypt]
