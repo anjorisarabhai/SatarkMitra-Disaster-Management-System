@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      "satarkmitra-disaster-management-system-2.onrender.com"
+    ],
     hmr: {
       overlay: false,
     },
