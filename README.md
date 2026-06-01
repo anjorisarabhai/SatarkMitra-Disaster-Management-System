@@ -18,8 +18,10 @@ AI-driven flood prediction and disaster response platform with hyperlocal risk a
 ---
 
 ## 🧠 System Architecture
-User → Frontend → Backend API → ML Models → Alerts → Dashboard / SMS / USSD
+User  →  Frontend  →  Backend API  →  ML Models  →  Alerts  →  Dashboard / SMS / USSD
+
 ↓
+
 MongoDB
 
 
